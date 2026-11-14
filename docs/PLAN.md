@@ -115,10 +115,10 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 |----|------|-------|--------|
 | P0.0 | Docs scaffold: PRD, ARCHITECTURE, SECURITY, API_GUIDE, DEPLOY, PLAN, CHANGELOG, REPORT, RULES, CONFIG, CONFIG.sample, CLAUDE.md (custom commands) | P0 | ✅ Done |
 | — | **P0 — Kernel, autoloader, entry point, request/response** | **P0** | 🔵 Info |
-| P0.1 | Custom PSR-4 autoloader for `Boneradf\` (no vendor) | P0 | ⚠️ Open |
-| P0.2 | Front-controller entry point + Kernel boot sequence | P0 | ⚠️ Open |
-| P0.3 | `Request` / `Response` (JSON) PSR-15-style objects | P0 | ⚠️ Open |
-| P0.4 | One route served via `php -S` returning JSON | P0 | ⚠️ Open |
+| P0.1 | Custom PSR-4 autoloader for `Boneradf\` (no vendor) | P0 | ✅ Done |
+| P0.2 | Front-controller entry point + Kernel boot sequence | P0 | ✅ Done |
+| P0.3 | `Request` / `Response` (JSON) PSR-15-style objects | P0 | ✅ Done |
+| P0.4 | One route served via `php -S` returning JSON | P0 | ✅ Done |
 | — | **P1 — Routing + middleware pipeline** | **P1** | 🔵 Info |
 | P1.1 | `Router`: method + path matching, route enumeration | P1 | ⚠️ Open |
 | P1.2 | Middleware pipeline: next / abort / error bubbling | P1 | ⚠️ Open |

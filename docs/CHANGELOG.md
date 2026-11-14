@@ -51,6 +51,13 @@ Versions follow [Semantic Versioning](https://semver.org/).
   current branch: runs `>push` first if `git status` or `git log @{u}..`
   is non-empty, before branching from the current branch.
 - `README.md` added (project description placeholder).
+- P0 kernel: `src/Kernel/autoload.php` (custom PSR-4 autoloader for
+  `Boneradf\`, no composer), `src/Kernel/Request.php` (immutable HTTP
+  request), `src/Kernel/Response.php` (JSON response + uniform error
+  envelope), `src/Kernel/Kernel.php` (boot pipeline, unhandled exception
+  → 500 JSON), `public/index.php` (front controller).
+- `tests/p0.php` — P0 verification: 20 assertions (autoloader, Request,
+  Response, Kernel 404/500 contract).
 - `.gitignore`: added `/sample_frontdev` (frontend test scaffold, separate
   git repo, not part of framework).
 

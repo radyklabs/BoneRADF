@@ -20,7 +20,7 @@ Project root is `app/` — all BoneRADF code and docs live there.
 | # | Work stream | Phase | Status | Notes |
 |---|---|---|---|---|
 | 1 | Docs scaffold | P0-docs | ✅ Done | PRD, ARCHITECTURE, SECURITY, API_GUIDE, DEPLOY, PLAN, CHANGELOG, REPORT, RULES, CONFIG, CONFIG.sample created |
-| 2 | Kernel | P0 | ⚠️ Open | Bootstrap, request/response lifecycle, zero-dep autoloader not started |
+| 2 | Kernel | P0 | ✅ Done | Autoloader, Request, Response, Kernel, front controller. `tests/p0.php` 20/20 pass. Peak RSS 2.00 MB (target < 25 MB). 404 JSON via `php -S` verified. |
 | 3 | Routing + Middleware | P1 | ⚠️ Open | Not started |
 | 4 | Config + DI + Logging | P2 | ⚠️ Open | Not started |
 | 5 | DB + Validation | P3 | ⚠️ Open | PDO-only query builder, validation rules not started |
@@ -48,8 +48,8 @@ Overall: docs complete, implementation not started. Schedule risk tracked under 
 
 | Severity | Risk | Impact | Mitigation |
 |---|---|---|---|
-| 🔴 Critical | No code exists yet; schedule risk for any date-dependent milestone | v1.0 cannot be scoped or estimated until P0 starts | Begin kernel/P0 immediately; treat all downstream dates as uncommitted |
-| 🟠 Major | Zero-dep autoloader performance unmeasured | Could miss headless-API latency targets under load | Benchmark in P0; record numbers in REPORT before P1 exit |
+| 🔴 Critical | No code exists yet; schedule risk for any date-dependent milestone | v1.0 cannot be scoped or estimated until P0 starts | **Resolved 2026-11-14** — P0 complete; kernel boots, serves 404 JSON, 2.00 MB peak RSS |
+| 🟠 Major | Zero-dep autoloader performance unmeasured | Could miss headless-API latency targets under load | **Resolved 2026-11-14** — `tests/p0.php` run: 20 assertions pass; peak RSS 2.00 MB (target < 25 MB) |
 | 🟠 Major | Security modules are ON by default but untested | Defaults could break legitimate requests or mask flaws | Thorough test matrix in P4 before any release candidate |
 
 Note: earlier risk "unrelated WordPress tree occupies app/" is **resolved** —
@@ -82,18 +82,18 @@ and `logs/` at repo root remain out-of-scope.
 ## Doc sync checklist
 
 1. PLAN reflects current REPORT status — verified 2026-11-14 (both: docs only).
-2. PRD reflects implemented vs planned — verified 2026-11-14 (nothing implemented).
-3. REPORT matches actual code state — verified 2026-11-14 (no code committed).
-4. CHANGELOG includes all committed changes — verified 2026-11-14 (none).
+2. PRD reflects implemented vs planned — verified 2026-11-14 (P0 done: kernel, autoloader, request/response; P1–P5 still planned).
+3. REPORT matches actual code state — verified 2026-11-14 (P0 complete: `src/Kernel/`, `public/index.php`, `tests/p0.php`).
+4. CHANGELOG includes all committed changes — verified 2026-11-14 (P0 entry added).
 
 ## Next actions
 
-1. Start kernel/P0: zero-dep autoloader, request/response lifecycle, bootstrap entry point.
-2. Benchmark autoloader load time + memory footprint; record baseline in this report (target: < 25 MB RSS).
+1. ~~Start kernel/P0~~ — done 2026-11-14.
+2. ~~Benchmark autoloader~~ — done: peak RSS 2.00 MB, recorded above.
 3. Define test harness and minimum coverage gate before P1 begins.
 4. Implement `bone` CLI skeleton (routes, modules, serve — D10) alongside P0.
 5. Lock down config precedence (env > file > defaults) in P2.
 
 ---
 
-**Last synced: 2026-11-14 — project root moved to app/; initial audit; docs scaffold complete, implementation not started.**
+**Last synced: 2026-11-14 — P0 complete; kernel boots, 404 JSON verified, 20/20 tests pass, 2.00 MB peak RSS.**
