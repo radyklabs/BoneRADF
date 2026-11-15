@@ -128,6 +128,10 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `public/.htaccess` — front-controller rewrite (non-file paths → `index.php`)
+  so clean paths like `/hello` resolve via the router under Apache/LocalWP.
+  Snippet was already documented in `DEPLOY.md` §5; now active in dev.
+
 ### Changed
 
 ### Deprecated
@@ -140,4 +144,4 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
-**Last synced: 2026-11-16 — v1.0.0 released: [1.0.0-dev] moved to [1.0.0]; fresh [Unreleased] section opened.**
+**Last synced: 2026-11-16 — v1.0.0 released: tag `v1.0.0` → merge commit `b77d382` (PR #1 dev→main).**
