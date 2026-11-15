@@ -120,10 +120,10 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 | P0.3 | `Request` / `Response` (JSON) PSR-15-style objects | P0 | ✅ Done |
 | P0.4 | One route served via `php -S` returning JSON | P0 | ✅ Done |
 | — | **P1 — Routing + middleware pipeline** | **P1** | 🔵 Info |
-| P1.1 | `Router`: method + path matching, route enumeration | P1 | ⚠️ Open |
-| P1.2 | Middleware pipeline: next / abort / error bubbling | P1 | ⚠️ Open |
-| P1.3 | JSON error responses: 404 / 405 / unhandled exception | P1 | ⚠️ Open |
-| P1.4 | Middleware ordering + abort + bubbling tests | P1 | ⚠️ Open |
+| P1.1 | `Router`: method + path matching, route enumeration | P1 | ✅ Done |
+| P1.2 | Middleware pipeline: next / abort / error bubbling | P1 | ✅ Done |
+| P1.3 | JSON error responses: 404 / 405 / unhandled exception | P1 | ✅ Done |
+| P1.4 | Middleware ordering + abort + bubbling tests | P1 | ✅ Done |
 | — | **P2 — Config + DI + logging** | **P2** | 🔵 Info |
 | P2.1 | Config loader, typed access, env override | P2 | ⚠️ Open |
 | P2.2 | Light DI container, constructor injection | P2 | ⚠️ Open |

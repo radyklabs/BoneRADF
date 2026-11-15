@@ -6,8 +6,16 @@ require dirname(__DIR__) . '/src/Kernel/autoload.php';
 
 use Boneradf\Kernel\Kernel;
 use Boneradf\Kernel\Request;
-use Boneradf\Kernel\Response;
+use Boneradf\Router\Router;
+use Boneradf\Middleware\Pipeline;
 
-$kernel = new Kernel();
+$router   = new Router();
+$pipeline = new Pipeline();
+
+// Register default routes
+$router->get('/health', fn () => ['status' => 'ok']);
+$router->get('/hello',  fn () => ['message' => 'Hello, world!']);
+
+$kernel = new Kernel($router, $pipeline);
 $response = $kernel->handle(Request::fromGlobals());
 $response->emit();

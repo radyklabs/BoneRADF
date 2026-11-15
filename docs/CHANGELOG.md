@@ -58,6 +58,14 @@ Versions follow [Semantic Versioning](https://semver.org/).
   → 500 JSON), `public/index.php` (front controller).
 - `tests/p0.php` — P0 verification: 20 assertions (autoloader, Request,
   Response, Kernel 404/500 contract).
+- P1 routing + middleware: `src/Router/Router.php` (`:param` matching, route
+  enumeration, groups), `src/Router/Route.php` (pattern matching, param
+  extraction, handler invocation), `src/Middleware/Middleware.php`
+  (PSR-15-shaped interface), `src/Middleware/Pipeline.php` (ordered pipeline,
+  `next`, abort, error bubbling), `src/Kernel/Kernel.php` (wired router +
+  pipeline; 404 / 405 / 500 JSON envelopes).
+- `tests/p1.php` — P1 verification: 20 assertions (router matching, groups,
+  enumeration, middleware ordering, abort, kernel 404/405/500).
 - `.gitignore`: added `/sample_frontdev` (frontend test scaffold, separate
   git repo, not part of framework).
 

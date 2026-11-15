@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Boneradf\Kernel;
 
+use Boneradf\Router\Router;
+use Boneradf\Middleware\Pipeline;
 use Throwable;
 
 /**
@@ -11,10 +13,8 @@ use Throwable;
  *
  * Boot order:
  *   1. Autoloader (registered by the time this class is loaded)
- *   2. Config (planned P2 — not wired yet)
- *   3. Middleware pipeline (planned P1 — not wired yet)
- *   4. Router (planned P1 — not wired yet)
- *   5. Dispatch → handler → response
+ *   2. Router + Pipeline (set externally at boot)
+ *   3. Dispatch → middleware → handler → response
  *
  * Unhandled exceptions are caught and converted to a uniform JSON error
  * envelope. No stack traces in the response body.
@@ -22,6 +22,25 @@ use Throwable;
 final class Kernel
 {
     private const PRODUCTION = true;
+
+    private Router $router;
+    private Pipeline $pipeline;
+
+    public function __construct(?Router $router = null, ?Pipeline $pipeline = null)
+    {
+        $this->router   = $router ?? new Router();
+        $this->pipeline = $pipeline ?? new Pipeline();
+    }
+
+    public function router(): Router
+    {
+        return $this->router;
+    }
+
+    public function pipeline(): Pipeline
+    {
+        return $this->pipeline;
+    }
 
     public function handle(Request $request): Response
     {
@@ -36,11 +55,31 @@ final class Kernel
 
     private function dispatch(Request $request): Response
     {
-        // ponytail: no router yet (P1) — every request falls through to 404.
-        // Once Router lands, replace this with:
-        //   $route = $this->router->match($request);
-        //   if ($route === null) { return 404; }
-        //   return ($route->handler)($request, $route->params);
-        return Response::error('NOT_FOUND', 'Route not found.', 404);
+        $match = $this->router->match($request);
+
+        if ($match === null) {
+            // Distinguish 404 (path unknown) from 405 (path known, wrong method)
+            if ($this->router->pathExists($request->path())) {
+                return Response::error('METHOD_NOT_ALLOWED', 'Method not allowed for this path.', 405);
+            }
+            return Response::error('NOT_FOUND', 'Route not found.', 404);
+        }
+
+        /** @var \Boneradf\Router\Route $route */
+        $route  = $match['route'];
+        $params = $match['params'];
+
+        // Resolve route-specific middleware into the pipeline
+        $pipeline = $this->pipeline;
+        foreach ($route->middleware() as $name) {
+            $mw = $this->router->getMiddleware($name);
+            if ($mw !== null) {
+                $pipeline->add($mw);
+            }
+        }
+
+        $endpoint = fn (Request $req): Response => $route->invoke($req, $params);
+
+        return $pipeline->run($request, $endpoint);
     }
 }
