@@ -23,12 +23,12 @@ Project root is `app/` — all BoneRADF code and docs live there.
 | 2 | Kernel | P0 | ✅ Done | Autoloader, Request, Response, Kernel, front controller. `tests/p0.php` 20/20 pass. Peak RSS 2.00 MB (target < 25 MB). 404 JSON via `php -S` verified. |
 | 3 | Routing + Middleware | P1 | ✅ Done | Router (`:param`, groups, enumeration), Pipeline (ordering, abort, error bubbling), Kernel wired (404/405/500 envelopes). `tests/p1.php` 20/20 pass. Dev server: `/health` → 200, `/hello` → 200, unknown → 404. |
 | 4 | Config + DI + Logging | P2 | ✅ Done | Typed Config (env > file > defaults, required keys, type coercion), light DI Container (explicit bindings, circular detection), FileLogger (JSON lines, secret redaction). `tests/p2.php` 27/27 pass. Dev server verified. |
-| 5 | DB + Validation | P3 | ⚠️ Open | PDO-only query builder, validation rules not started |
+| 5 | DB + Validation | P3 | ✅ Done | PDO query builder (prepared-only, identifier allowlist, no raw SQL API), ConnectionFactory, strict Validator (required, types, min/max, pattern, in, callback, email, date). `tests/p3.php` 25/25 pass. SQLi probe `' OR 1=1 --` bound as param, not in SQL. |
 | 6 | Security modules | P4 | ⚠️ Open | Defense-by-default modules not started |
 | 7 | Cache + Tests + CLI + Deploy | P5 | ⚠️ Open | Not started |
 | 8 | v1.0.0 candidate | release | ⚠️ Open | Blocked on P0–P5 completion |
 
-Overall: P0–P2 complete; P3–P5 open. M1 gate met.
+Overall: P0–P3 complete; P4–P5 open. M2 gate met.
 
 ## Findings
 
@@ -92,8 +92,9 @@ and `logs/` at repo root remain out-of-scope.
 2. ~~Benchmark autoloader~~ — done: peak RSS 2.00 MB, recorded above.
 3. ~~Start P1 router + middleware~~ — done 2026-11-16; `tests/p1.php` 20/20 pass.
 4. ~~Start P2 config + DI + logging~~ — done 2026-11-16; `tests/p2.php` 27/27 pass.
-5. Start P3: PDO query builder + strict Validator.
+5. ~~Start P3 PDO query builder + validator~~ — done 2026-11-16; `tests/p3.php` 25/25 pass.
+6. Start P4: security modules (SecurityHeaders, CSRF, Auth, RBAC, RateLimit, signed cookies).
 
 ---
 
-**Last synced: 2026-11-16 — P0–P2 complete; 67/67 tests pass, 2.00 MB peak RSS.**
+**Last synced: 2026-11-16 — P0–P3 complete; 92/92 tests pass, 2.00 MB peak RSS.**

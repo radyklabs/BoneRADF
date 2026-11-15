@@ -130,10 +130,10 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 | P2.3 | Structured JSON logger | P2 | ✅ Done |
 | P2.4 | Tests: container resolution, config errors, log line shape | P2 | ✅ Done |
 | — | **P3 — DB query builder + validation** | **P3** | 🔵 Info |
-| P3.1 | PDO query builder, prepared-only, no raw API (D5/D6) | P3 | ⚠️ Open |
-| P3.2 | DSN support: MySQL/MariaDB/SQLite/Postgres | P3 | ⚠️ Open |
-| P3.3 | Validation rules: required/types/pattern/length | P3 | ⚠️ Open |
-| P3.4 | SQLi probe test (payload fails safely) + validation tests | P3 | ⚠️ Open |
+| P3.1 | PDO query builder, prepared-only, no raw API (D5/D6) | P3 | ✅ Done |
+| P3.2 | DSN support: MySQL/MariaDB/SQLite/Postgres | P3 | ✅ Done |
+| P3.3 | Validation rules: required/types/pattern/length | P3 | ✅ Done |
+| P3.4 | SQLi probe test (payload fails safely) + validation tests | P3 | ✅ Done |
 | — | **P4 — Security modules (all default ON)** | **P4** | 🔵 Info |
 | P4.1 | Security headers module (5 headers) + tests | P4 | ⚠️ Open |
 | P4.2 | CSRF module + pass/fail tests | P4 | ⚠️ Open |

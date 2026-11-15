@@ -75,6 +75,15 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - `tests/p2.php` — P2 verification: 27 assertions (config precedence, type
   coercion, required keys; container bindings, factories, circular detection;
   logger JSON shape, redaction; kernel wiring).
+- P3 database + validation: `src/Database/QueryBuilder.php` (PDO prepared
+  statements only, no raw SQL API, identifier allowlist, SQLi-safe),
+  `src/Database/ConnectionFactory.php` (DSN-based PDO factory),
+  `src/Validator/Validator.php` (strict rule engine: required, types, min/max,
+  pattern, in, callback, email, date), `src/Validator/ValidationResult.php`
+  (per-field error container).
+- `tests/p3.php` — P3 verification: 25 assertions (query builder SELECT/
+  UPDATE/DELETE, SQLi probe bound as data, identifier validation, WHERE IN;
+  validator rules, pattern, nullable, in, min/max).
 - `.gitignore`: added `/sample_frontdev` (frontend test scaffold, separate
   git repo, not part of framework).
 
