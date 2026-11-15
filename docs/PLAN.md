@@ -153,9 +153,9 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 
 | Milestone | Scope | Gate (definition of done) | Status |
 |-----------|-------|---------------------------|--------|
-| **M1** | P0–P1 | Route served (via `php -S`); middleware ordering, abort, error bubbling verified | ⚠️ Open |
-| **M2** | P2–P3 | Container resolves + typed config + structured logs; prepared-only DB with SQLi probe failing safely; validation rules covered | ⚠️ Open |
-| **M3** | P4–P5 | Each security module has passing + failing test, default-ON asserted; micro test runner green; `bone` lists routes; Dockerfile/PHP-FPM recipe works → **v1.0 candidate** | ⚠️ Open |
+| **M1** | P0–P1 | Route served (via `php -S`); middleware ordering, abort, error bubbling verified | ✅ Done |
+| **M2** | P2–P3 | Container resolves + typed config + structured logs; prepared-only DB with SQLi probe failing safely; validation rules covered | ✅ Done |
+| **M3** | P4–P5 | Each security module has passing + failing test, default-ON asserted; micro test runner green; `bone` lists routes; Dockerfile/PHP-FPM recipe works → **v1.0 candidate** | ✅ Done |
 
 ---
 
@@ -165,4 +165,4 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 - New file paths in `src/` are planned until created; do not cite them as existing.
 - Scope changes mid-phase: accept / defer / reject explicitly — never silently absorb.
 
-Last synced: 2026-11-14 — project root moved to app/; decisions from user Q&A locked.
+Last synced: 2026-11-16 — P0–P5 complete; M1–M3 gates met; v1.0.0 candidate.

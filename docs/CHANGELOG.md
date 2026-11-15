@@ -106,6 +106,8 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - `tests/p5.php` — P5 verification: 21 assertions (memory/file cache
   round-trip, TTL, delete, clear; facade; runner self-test incl. throwing
   assertions).
+- Milestones M1–M3 marked ✅ Done in PLAN (149/149 tests pass across P0–P5;
+  v1.0.0 candidate).
 - `.gitignore`: added `/sample_frontdev` (frontend test scaffold, separate
   git repo, not part of framework).
 
