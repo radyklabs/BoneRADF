@@ -135,12 +135,12 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 | P3.3 | Validation rules: required/types/pattern/length | P3 | ✅ Done |
 | P3.4 | SQLi probe test (payload fails safely) + validation tests | P3 | ✅ Done |
 | — | **P4 — Security modules (all default ON)** | **P4** | 🔵 Info |
-| P4.1 | Security headers module (5 headers) + tests | P4 | ⚠️ Open |
-| P4.2 | CSRF module + pass/fail tests | P4 | ⚠️ Open |
-| P4.3 | Auth module (JWT + session), fail-closed + tests | P4 | ⚠️ Open |
-| P4.4 | RBAC module + allow/deny tests | P4 | ⚠️ Open |
-| P4.5 | Rate-limit module (429) + tests | P4 | ⚠️ Open |
-| P4.6 | Signed cookies (core) + tamper test | P4 | ⚠️ Open |
+| P4.1 | Security headers module (5 headers) + tests | P4 | ✅ Done |
+| P4.2 | CSRF module + pass/fail tests | P4 | ✅ Done |
+| P4.3 | Auth module (JWT + session), fail-closed + tests | P4 | ✅ Done |
+| P4.4 | RBAC module + allow/deny tests | P4 | ✅ Done |
+| P4.5 | Rate-limit module (429) + tests | P4 | ✅ Done |
+| P4.6 | Signed cookies (core) + tamper test | P4 | ✅ Done |
 | — | **P5 — Cache + test runner + CLI + deploy** | **P5** | 🔵 Info |
 | P5.1 | Cache (file driver scope TBD) + TTL test | P5 | ⚠️ Open |
 | P5.2 | Micro test runner (non-zero exit on failure) — D7 | P5 | ⚠️ Open |

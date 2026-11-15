@@ -19,7 +19,50 @@ final class Request
         private readonly array $body = [],
         private readonly array $query = [],
         private readonly array $headers = [],
+        private array $attributes = [],
     ) {
+    }
+
+    /**
+     * Return a new request with an attribute set (immutable).
+     *
+     * @param string $key
+     * @param mixed  $value
+     */
+    public function withAttribute(string $key, mixed $value): self
+    {
+        $clone = clone $this;
+        $clone->attributes[$key] = $value;
+        return $clone;
+    }
+
+    /**
+     * Return a new request with a user identity attached.
+     *
+     * @param array<string, mixed>|null $user  decoded JWT claims
+     */
+    public function withUser(?array $user): self
+    {
+        return $this->withAttribute('user', $user);
+    }
+
+    /**
+     * Get an attribute value, or null.
+     */
+    public function attribute(string $key): mixed
+    {
+        return $this->attributes[$key] ?? null;
+    }
+
+    /**
+     * Get the authenticated user identity, or null.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function user(): ?array
+    {
+        $user = $this->attributes['user'] ?? null;
+        return is_array($user) ? $user : null;
     }
 
     public function method(): string

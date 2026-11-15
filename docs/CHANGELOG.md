@@ -84,6 +84,18 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - `tests/p3.php` — P3 verification: 25 assertions (query builder SELECT/
   UPDATE/DELETE, SQLi probe bound as data, identifier validation, WHERE IN;
   validator rules, pattern, nullable, in, min/max).
+- P4 security modules: `src/Security/SecurityHeaders.php` (5 headers ON by
+  default, overridable), `src/Security/CsrfGuard.php` (HMAC-signed token,
+  state-changing methods only, 403 on fail), `src/Security/AuthGuard.php`
+  (JWT HS256, access+refresh TTLs, fail-closed), `src/Security/RbacGuard.php`
+  (deny-by-default role/permission gate), `src/Security/RateLimiter.php`
+  (sliding window, fail-closed on storage error, 429 on exceed),
+  `src/Security/SignedCookie.php` (HMAC-signed cookie, constant-time verify).
+- `src/Kernel/Request.php` — added `attribute()`, `user()`, `withAttribute()`,
+  `withUser()` (immutable; used by AuthGuard to attach identity).
+- `tests/p4.php` — P4 verification: 36 assertions (all five security headers,
+  CSRF pass/fail, JWT issue/verify/tamper/expired, RBAC deny/allow, rate
+  limiter 429 + per-IP isolation + reset, signed cookie sign/verify/tamper).
 - `.gitignore`: added `/sample_frontdev` (frontend test scaffold, separate
   git repo, not part of framework).
 
