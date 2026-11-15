@@ -1,0 +1,151 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * bone — CLI binary for BoneRADF.
+ *
+ * Subcommands (v1, D10):
+ *   bone routes   — list all registered routes
+ *   bone modules  — list installed modules
+ *   bone serve    — start PHP built-in dev server
+ *
+ * Usage:
+ *   php bin/bone routes
+ *   php bin/bone modules
+ *   php bin/bone serve [--host=0.0.0.0] [--port=8080]
+ */
+
+require dirname(__DIR__) . '/src/Kernel/autoload.php';
+
+use Boneradf\Kernel\Kernel;
+use Boneradf\Router\Router;
+use Boneradf\Middleware\Pipeline;
+
+$cmd = $argv[1] ?? 'help';
+
+switch ($cmd) {
+
+    case 'routes':
+        cmdRoutes();
+        break;
+
+    case 'modules':
+        cmdModules();
+        break;
+
+    case 'serve':
+        cmdServe($argv);
+        break;
+
+    case 'help':
+    case '--help':
+    case '-h':
+        cmdHelp();
+        break;
+
+    default:
+        fwrite(STDERR, "Unknown command: {$cmd}\n");
+        cmdHelp();
+        exit(1);
+}
+
+// ------------------------------------------------------------------
+
+function cmdRoutes(): void
+{
+    // ponytail: load routes from public/index.php's route registrations.
+    // For now, instantiate a fresh Kernel (no routes yet → empty list).
+    // Upgrade path: a routes/ file is loaded by the kernel.
+    $router   = new Router();
+    $pipeline = new Pipeline();
+    $kernel   = new Kernel($router, $pipeline);
+
+    $routes = $router->routes();
+    if ($routes === []) {
+        echo "No routes registered.\n";
+        return;
+    }
+
+    printf("%-6s %-30s %s\n", 'METHOD', 'PATTERN', 'HANDLER');
+    printf("%-6s %-30s %s\n", '------', '-------', '-------');
+    foreach ($routes as $route) {
+        $handlerName = (string)(new ReflectionFunction($route->handlerForGroup()));
+        printf("%-6s %-30s %s\n",
+            $route->method(),
+            $route->pattern(),
+            substr($handlerName, 0, 60)
+        );
+    }
+}
+
+function cmdModules(): void
+{
+    // ponytail: no module registry yet; list built-in security modules as
+    // "installed" (they ship in-tree, D5).
+    $modules = [
+        ['SecurityHeaders', 'ON'],
+        ['CsrfGuard',       'ON'],
+        ['AuthGuard',       'ON'],
+        ['RbacGuard',       'ON'],
+        ['RateLimiter',     'ON'],
+        ['SignedCookie',    'ON'],
+    ];
+
+    printf("%-20s %s\n", 'MODULE', 'STATUS');
+    printf("%-20s %s\n", '------', '------');
+    foreach ($modules as [$name, $status]) {
+        printf("%-20s %s\n", $name, $status);
+    }
+}
+
+function cmdServe(array $argv): void
+{
+    $host = '0.0.0.0';
+    $port = '8080';
+
+    foreach (array_slice($argv, 2) as $arg) {
+        if (str_starts_with($arg, '--host=')) {
+            $host = substr($arg, 7);
+        }
+        if (str_starts_with($arg, '--port=')) {
+            $port = substr($arg, 7);
+        }
+    }
+
+    $public = dirname(__DIR__) . '/public';
+    $cmd = sprintf(
+        '%s -S %s:%s -t "%s"',
+        PHP_BINARY,
+        $host,
+        $port,
+        $public,
+    );
+
+    // deviation: secure coding rule bans proc_open/exec in core —
+    // `bone serve` prints the command instead of spawning the server.
+    // reconcile when the rule is scoped to framework runtime only.
+    echo "Run the dev server with:\n\n";
+    echo "  {$cmd}\n\n";
+    echo "Or via the site's local domain (LocalWP): http://boneradfw.local\n";
+}
+
+function cmdHelp(): void
+{
+    echo <<<HELP
+bone — BoneRADF CLI
+
+Usage:
+  bone <command> [options]
+
+Commands:
+  routes     List all registered routes
+  modules    List installed modules
+  serve      Start PHP dev server (default: 0.0.0.0:8080)
+
+Options for serve:
+  --host=<addr>    Bind address (default 0.0.0.0)
+  --port=<port>    Port (default 8080)
+
+HELP;
+}

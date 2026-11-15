@@ -115,37 +115,37 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 |----|------|-------|--------|
 | P0.0 | Docs scaffold: PRD, ARCHITECTURE, SECURITY, API_GUIDE, DEPLOY, PLAN, CHANGELOG, REPORT, RULES, CONFIG, CONFIG.sample, CLAUDE.md (custom commands) | P0 | ✅ Done |
 | — | **P0 — Kernel, autoloader, entry point, request/response** | **P0** | 🔵 Info |
-| P0.1 | Custom PSR-4 autoloader for `Boneradf\` (no vendor) | P0 | ⚠️ Open |
-| P0.2 | Front-controller entry point + Kernel boot sequence | P0 | ⚠️ Open |
-| P0.3 | `Request` / `Response` (JSON) PSR-15-style objects | P0 | ⚠️ Open |
-| P0.4 | One route served via `php -S` returning JSON | P0 | ⚠️ Open |
+| P0.1 | Custom PSR-4 autoloader for `Boneradf\` (no vendor) | P0 | ✅ Done |
+| P0.2 | Front-controller entry point + Kernel boot sequence | P0 | ✅ Done |
+| P0.3 | `Request` / `Response` (JSON) PSR-15-style objects | P0 | ✅ Done |
+| P0.4 | One route served via `php -S` returning JSON | P0 | ✅ Done |
 | — | **P1 — Routing + middleware pipeline** | **P1** | 🔵 Info |
-| P1.1 | `Router`: method + path matching, route enumeration | P1 | ⚠️ Open |
-| P1.2 | Middleware pipeline: next / abort / error bubbling | P1 | ⚠️ Open |
-| P1.3 | JSON error responses: 404 / 405 / unhandled exception | P1 | ⚠️ Open |
-| P1.4 | Middleware ordering + abort + bubbling tests | P1 | ⚠️ Open |
+| P1.1 | `Router`: method + path matching, route enumeration | P1 | ✅ Done |
+| P1.2 | Middleware pipeline: next / abort / error bubbling | P1 | ✅ Done |
+| P1.3 | JSON error responses: 404 / 405 / unhandled exception | P1 | ✅ Done |
+| P1.4 | Middleware ordering + abort + bubbling tests | P1 | ✅ Done |
 | — | **P2 — Config + DI + logging** | **P2** | 🔵 Info |
-| P2.1 | Config loader, typed access, env override | P2 | ⚠️ Open |
-| P2.2 | Light DI container, constructor injection | P2 | ⚠️ Open |
-| P2.3 | Structured JSON logger | P2 | ⚠️ Open |
-| P2.4 | Tests: container resolution, config errors, log line shape | P2 | ⚠️ Open |
+| P2.1 | Config loader, typed access, env override | P2 | ✅ Done |
+| P2.2 | Light DI container, constructor injection | P2 | ✅ Done |
+| P2.3 | Structured JSON logger | P2 | ✅ Done |
+| P2.4 | Tests: container resolution, config errors, log line shape | P2 | ✅ Done |
 | — | **P3 — DB query builder + validation** | **P3** | 🔵 Info |
-| P3.1 | PDO query builder, prepared-only, no raw API (D5/D6) | P3 | ⚠️ Open |
-| P3.2 | DSN support: MySQL/MariaDB/SQLite/Postgres | P3 | ⚠️ Open |
-| P3.3 | Validation rules: required/types/pattern/length | P3 | ⚠️ Open |
-| P3.4 | SQLi probe test (payload fails safely) + validation tests | P3 | ⚠️ Open |
+| P3.1 | PDO query builder, prepared-only, no raw API (D5/D6) | P3 | ✅ Done |
+| P3.2 | DSN support: MySQL/MariaDB/SQLite/Postgres | P3 | ✅ Done |
+| P3.3 | Validation rules: required/types/pattern/length | P3 | ✅ Done |
+| P3.4 | SQLi probe test (payload fails safely) + validation tests | P3 | ✅ Done |
 | — | **P4 — Security modules (all default ON)** | **P4** | 🔵 Info |
-| P4.1 | Security headers module (5 headers) + tests | P4 | ⚠️ Open |
-| P4.2 | CSRF module + pass/fail tests | P4 | ⚠️ Open |
-| P4.3 | Auth module (JWT + session), fail-closed + tests | P4 | ⚠️ Open |
-| P4.4 | RBAC module + allow/deny tests | P4 | ⚠️ Open |
-| P4.5 | Rate-limit module (429) + tests | P4 | ⚠️ Open |
-| P4.6 | Signed cookies (core) + tamper test | P4 | ⚠️ Open |
+| P4.1 | Security headers module (5 headers) + tests | P4 | ✅ Done |
+| P4.2 | CSRF module + pass/fail tests | P4 | ✅ Done |
+| P4.3 | Auth module (JWT + session), fail-closed + tests | P4 | ✅ Done |
+| P4.4 | RBAC module + allow/deny tests | P4 | ✅ Done |
+| P4.5 | Rate-limit module (429) + tests | P4 | ✅ Done |
+| P4.6 | Signed cookies (core) + tamper test | P4 | ✅ Done |
 | — | **P5 — Cache + test runner + CLI + deploy** | **P5** | 🔵 Info |
-| P5.1 | Cache (file driver scope TBD) + TTL test | P5 | ⚠️ Open |
-| P5.2 | Micro test runner (non-zero exit on failure) — D7 | P5 | ⚠️ Open |
-| P5.3 | `bone` CLI: route list, module list, serve — D8 | P5 | ⚠️ Open |
-| P5.4 | Dockerfile / PHP-FPM deploy recipe + verification | P5 | ⚠️ Open |
+| P5.1 | Cache (file driver scope TBD) + TTL test | P5 | ✅ Done |
+| P5.2 | Micro test runner (non-zero exit on failure) — D7 | P5 | ✅ Done |
+| P5.3 | `bone` CLI: route list, module list, serve — D8 | P5 | ✅ Done |
+| P5.4 | Dockerfile / PHP-FPM deploy recipe + verification | P5 | ✅ Done |
 
 ---
 
@@ -153,9 +153,9 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 
 | Milestone | Scope | Gate (definition of done) | Status |
 |-----------|-------|---------------------------|--------|
-| **M1** | P0–P1 | Route served (via `php -S`); middleware ordering, abort, error bubbling verified | ⚠️ Open |
-| **M2** | P2–P3 | Container resolves + typed config + structured logs; prepared-only DB with SQLi probe failing safely; validation rules covered | ⚠️ Open |
-| **M3** | P4–P5 | Each security module has passing + failing test, default-ON asserted; micro test runner green; `bone` lists routes; Dockerfile/PHP-FPM recipe works → **v1.0 candidate** | ⚠️ Open |
+| **M1** | P0–P1 | Route served (via `php -S`); middleware ordering, abort, error bubbling verified | ✅ Done |
+| **M2** | P2–P3 | Container resolves + typed config + structured logs; prepared-only DB with SQLi probe failing safely; validation rules covered | ✅ Done |
+| **M3** | P4–P5 | Each security module has passing + failing test, default-ON asserted; micro test runner green; `bone` lists routes; Dockerfile/PHP-FPM recipe works → **v1.0 candidate** | ✅ Done |
 
 ---
 
@@ -165,4 +165,4 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 - New file paths in `src/` are planned until created; do not cite them as existing.
 - Scope changes mid-phase: accept / defer / reject explicitly — never silently absorb.
 
-Last synced: 2026-11-14 — project root moved to app/; decisions from user Q&A locked.
+Last synced: 2026-11-16 — P0–P5 complete; M1–M3 gates met; v1.0.0 candidate.

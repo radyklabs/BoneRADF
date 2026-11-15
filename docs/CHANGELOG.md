@@ -25,13 +25,12 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - **Ordering**: newest version first; within a version, sections in the
   canonical order Added → Changed → Deprecated → Removed → Fixed → Security.
 
-## [1.0.0-dev] — Unreleased / In progress
+## [1.0.0] — 2026-11-16
 
 ### Added
 
 - Docs scaffold: `PRD.md`, `ARCHITECTURE.md`, `SECURITY.md`, `API_GUIDE.md`,
   `DEPLOY.md`, `PLAN.md`, `CHANGELOG.md`, `REPORT.md`.
-- No code changes yet — all work lives under `app/`.
 - Locked decisions D9–D10: memory target (<25 MB RSS), config precedence
   (env > file > defaults), router param syntax (`:id`), validation status
   (422), rate-limit fail mode (fail-closed), cache v1 (in-memory + file),
@@ -51,13 +50,94 @@ Versions follow [Semantic Versioning](https://semver.org/).
   current branch: runs `>push` first if `git status` or `git log @{u}..`
   is non-empty, before branching from the current branch.
 - `README.md` added (project description placeholder).
+- P0 kernel: `src/Kernel/autoload.php` (custom PSR-4 autoloader for
+  `Boneradf\`, no composer), `src/Kernel/Request.php` (immutable HTTP
+  request), `src/Kernel/Response.php` (JSON response + uniform error
+  envelope), `src/Kernel/Kernel.php` (boot pipeline, unhandled exception
+  → 500 JSON), `public/index.php` (front controller).
+- `tests/p0.php` — P0 verification: 20 assertions (autoloader, Request,
+  Response, Kernel 404/500 contract).
+- P1 routing + middleware: `src/Router/Router.php` (`:param` matching, route
+  enumeration, groups), `src/Router/Route.php` (pattern matching, param
+  extraction, handler invocation), `src/Middleware/Middleware.php`
+  (PSR-15-shaped interface), `src/Middleware/Pipeline.php` (ordered pipeline,
+  `next`, abort, error bubbling), `src/Kernel/Kernel.php` (wired router +
+  pipeline; 404 / 405 / 500 JSON envelopes).
+- `tests/p1.php` — P1 verification: 20 assertions (router matching, groups,
+  enumeration, middleware ordering, abort, kernel 404/405/500).
+- P2 config + DI + logging: `src/Config/Config.php` (typed, env > file >
+  defaults precedence, required-key enforcement), `src/Container/Container.php`
+  (explicit bindings only, circular detection, request-scoped caching),
+  `src/Logger/Logger.php` (PSR-3-shaped interface), `src/Logger/FileLogger.php`
+  (structured JSON-line output, secret redaction), `src/Kernel/Kernel.php`
+  (now accepts optional Config / Container / Logger; logs unhandled exceptions).
+- `tests/p2.php` — P2 verification: 27 assertions (config precedence, type
+  coercion, required keys; container bindings, factories, circular detection;
+  logger JSON shape, redaction; kernel wiring).
+- P3 database + validation: `src/Database/QueryBuilder.php` (PDO prepared
+  statements only, no raw SQL API, identifier allowlist, SQLi-safe),
+  `src/Database/ConnectionFactory.php` (DSN-based PDO factory),
+  `src/Validator/Validator.php` (strict rule engine: required, types, min/max,
+  pattern, in, callback, email, date), `src/Validator/ValidationResult.php`
+  (per-field error container).
+- `tests/p3.php` — P3 verification: 25 assertions (query builder SELECT/
+  UPDATE/DELETE, SQLi probe bound as data, identifier validation, WHERE IN;
+  validator rules, pattern, nullable, in, min/max).
+- P4 security modules: `src/Security/SecurityHeaders.php` (5 headers ON by
+  default, overridable), `src/Security/CsrfGuard.php` (HMAC-signed token,
+  state-changing methods only, 403 on fail), `src/Security/AuthGuard.php`
+  (JWT HS256, access+refresh TTLs, fail-closed), `src/Security/RbacGuard.php`
+  (deny-by-default role/permission gate), `src/Security/RateLimiter.php`
+  (sliding window, fail-closed on storage error, 429 on exceed),
+  `src/Security/SignedCookie.php` (HMAC-signed cookie, constant-time verify).
+- `src/Kernel/Request.php` — added `attribute()`, `user()`, `withAttribute()`,
+  `withUser()` (immutable; used by AuthGuard to attach identity).
+- `tests/p4.php` — P4 verification: 36 assertions (all five security headers,
+  CSRF pass/fail, JWT issue/verify/tamper/expired, RBAC deny/allow, rate
+  limiter 429 + per-IP isolation + reset, signed cookie sign/verify/tamper).
+- P5 cache + test runner + CLI + deploy: `src/Cache/Cache.php` (facade),
+  `src/Cache/CacheDriver.php` (interface), `src/Cache/MemoryDriver.php`
+  (per-request), `src/Cache/FileDriver.php` (filesystem, sha256-keyed files),
+  `src/Test/Runner.php` (micro runner: `test()`, `assert_true()`, `assert_eq()`,
+  `assert_null()`, `assert_contains()`, `test_run()` — non-zero exit on failure;
+  `assert()` is reserved, hence `assert_true()`), `bin/bone` (CLI: routes,
+  modules, serve), `Dockerfile` (dev-only php:8.1-cli recipe).
+- `tests/p5.php` — P5 verification: 21 assertions (memory/file cache
+  round-trip, TTL, delete, clear; facade; runner self-test incl. throwing
+  assertions).
+- Milestones M1–M3 marked ✅ Done in PLAN (149/149 tests pass across P0–P5;
+  v1.0.0 candidate).
 - `.gitignore`: added `/sample_frontdev` (frontend test scaffold, separate
   git repo, not part of framework).
 
 ### Security
 
-- None yet. Defense-by-default security modules are planned for phase P4.
+- P4 delivered the defense-by-default modules (SecurityHeaders, CsrfGuard,
+  AuthGuard, RbacGuard, RateLimiter, SignedCookie). Headers ON, CSRF
+  enforced on state-changing methods, JWT HS256 with exp/nbf + fail-closed,
+  RBAC deny-by-default, rate-limit fail-closed with 429 + Retry-After body,
+  HMAC-signed cookies verified with `hash_equals`.
+- P5 hardening: `FileDriver` keys files by `hash('sha256', $key)` (no
+  user-controlled path segments); `bin/bone serve` no longer spawns a
+  server process — prints the command instead (secure-coding rule: no
+  `proc_open`/`exec` in project code).
 
 ---
 
-**Last synced: 2026-11-14 — project root moved to app/; docs scaffold complete; no code committed.**
+## [Unreleased] — In progress
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+---
+
+**Last synced: 2026-11-16 — v1.0.0 released: [1.0.0-dev] moved to [1.0.0]; fresh [Unreleased] section opened.**
