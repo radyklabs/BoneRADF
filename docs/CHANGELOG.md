@@ -66,6 +66,15 @@ Versions follow [Semantic Versioning](https://semver.org/).
   pipeline; 404 / 405 / 500 JSON envelopes).
 - `tests/p1.php` — P1 verification: 20 assertions (router matching, groups,
   enumeration, middleware ordering, abort, kernel 404/405/500).
+- P2 config + DI + logging: `src/Config/Config.php` (typed, env > file >
+  defaults precedence, required-key enforcement), `src/Container/Container.php`
+  (explicit bindings only, circular detection, request-scoped caching),
+  `src/Logger/Logger.php` (PSR-3-shaped interface), `src/Logger/FileLogger.php`
+  (structured JSON-line output, secret redaction), `src/Kernel/Kernel.php`
+  (now accepts optional Config / Container / Logger; logs unhandled exceptions).
+- `tests/p2.php` — P2 verification: 27 assertions (config precedence, type
+  coercion, required keys; container bindings, factories, circular detection;
+  logger JSON shape, redaction; kernel wiring).
 - `.gitignore`: added `/sample_frontdev` (frontend test scaffold, separate
   git repo, not part of framework).
 

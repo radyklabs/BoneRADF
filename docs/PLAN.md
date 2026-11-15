@@ -125,10 +125,10 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 | P1.3 | JSON error responses: 404 / 405 / unhandled exception | P1 | ✅ Done |
 | P1.4 | Middleware ordering + abort + bubbling tests | P1 | ✅ Done |
 | — | **P2 — Config + DI + logging** | **P2** | 🔵 Info |
-| P2.1 | Config loader, typed access, env override | P2 | ⚠️ Open |
-| P2.2 | Light DI container, constructor injection | P2 | ⚠️ Open |
-| P2.3 | Structured JSON logger | P2 | ⚠️ Open |
-| P2.4 | Tests: container resolution, config errors, log line shape | P2 | ⚠️ Open |
+| P2.1 | Config loader, typed access, env override | P2 | ✅ Done |
+| P2.2 | Light DI container, constructor injection | P2 | ✅ Done |
+| P2.3 | Structured JSON logger | P2 | ✅ Done |
+| P2.4 | Tests: container resolution, config errors, log line shape | P2 | ✅ Done |
 | — | **P3 — DB query builder + validation** | **P3** | 🔵 Info |
 | P3.1 | PDO query builder, prepared-only, no raw API (D5/D6) | P3 | ⚠️ Open |
 | P3.2 | DSN support: MySQL/MariaDB/SQLite/Postgres | P3 | ⚠️ Open |

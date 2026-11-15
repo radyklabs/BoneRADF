@@ -8,6 +8,9 @@ use Boneradf\Kernel\Kernel;
 use Boneradf\Kernel\Request;
 use Boneradf\Router\Router;
 use Boneradf\Middleware\Pipeline;
+use Boneradf\Container\Container;
+use Boneradf\Config\Config;
+use Boneradf\Logger\FileLogger;
 
 $router   = new Router();
 $pipeline = new Pipeline();
@@ -16,6 +19,9 @@ $pipeline = new Pipeline();
 $router->get('/health', fn () => ['status' => 'ok']);
 $router->get('/hello',  fn () => ['message' => 'Hello, world!']);
 
-$kernel = new Kernel($router, $pipeline);
+// ponytail: no .env loader yet (P2.1 deliverable) — Config uses empty defaults
+// upgrade path: load .env into $configData before passing to Config
+
+$kernel   = new Kernel($router, $pipeline);
 $response = $kernel->handle(Request::fromGlobals());
 $response->emit();
