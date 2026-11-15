@@ -96,12 +96,30 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - `tests/p4.php` — P4 verification: 36 assertions (all five security headers,
   CSRF pass/fail, JWT issue/verify/tamper/expired, RBAC deny/allow, rate
   limiter 429 + per-IP isolation + reset, signed cookie sign/verify/tamper).
+- P5 cache + test runner + CLI + deploy: `src/Cache/Cache.php` (facade),
+  `src/Cache/CacheDriver.php` (interface), `src/Cache/MemoryDriver.php`
+  (per-request), `src/Cache/FileDriver.php` (filesystem, sha256-keyed files),
+  `src/Test/Runner.php` (micro runner: `test()`, `assert_true()`, `assert_eq()`,
+  `assert_null()`, `assert_contains()`, `test_run()` — non-zero exit on failure;
+  `assert()` is reserved, hence `assert_true()`), `bin/bone` (CLI: routes,
+  modules, serve), `Dockerfile` (dev-only php:8.1-cli recipe).
+- `tests/p5.php` — P5 verification: 21 assertions (memory/file cache
+  round-trip, TTL, delete, clear; facade; runner self-test incl. throwing
+  assertions).
 - `.gitignore`: added `/sample_frontdev` (frontend test scaffold, separate
   git repo, not part of framework).
 
 ### Security
 
-- None yet. Defense-by-default security modules are planned for phase P4.
+- P4 delivered the defense-by-default modules (SecurityHeaders, CsrfGuard,
+  AuthGuard, RbacGuard, RateLimiter, SignedCookie). Headers ON, CSRF
+  enforced on state-changing methods, JWT HS256 with exp/nbf + fail-closed,
+  RBAC deny-by-default, rate-limit fail-closed with 429 + Retry-After body,
+  HMAC-signed cookies verified with `hash_equals`.
+- P5 hardening: `FileDriver` keys files by `hash('sha256', $key)` (no
+  user-controlled path segments); `bin/bone serve` no longer spawns a
+  server process — prints the command instead (secure-coding rule: no
+  `proc_open`/`exec` in project code).
 
 ---
 

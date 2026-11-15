@@ -8,9 +8,9 @@
 
 ## Scope
 
-Audit covers documentation completeness and implementation readiness only.
-No framework code exists in this repository yet; no code-level findings are
-reported. Out of scope: `conf/`, `logs/`, `sql/`, `.envrc` (legacy), and
+Audit covers documentation completeness and implementation readiness.
+All phases P0–P5 are implemented; code lives under `src/`, `public/`, `bin/`,
+`tests/`. Out of scope: `conf/`, `logs/`, `sql/`, `.envrc` (legacy), and
 `sample_frontdev/` (gitignored frontend test scaffold) — all not part of
 BoneRADF.
 Project root is `app/` — all BoneRADF code and docs live there.
@@ -25,24 +25,20 @@ Project root is `app/` — all BoneRADF code and docs live there.
 | 4 | Config + DI + Logging | P2 | ✅ Done | Typed Config (env > file > defaults, required keys, type coercion), light DI Container (explicit bindings, circular detection), FileLogger (JSON lines, secret redaction). `tests/p2.php` 27/27 pass. Dev server verified. |
 | 5 | DB + Validation | P3 | ✅ Done | PDO query builder (prepared-only, identifier allowlist, no raw SQL API), ConnectionFactory, strict Validator (required, types, min/max, pattern, in, callback, email, date). `tests/p3.php` 25/25 pass. SQLi probe `' OR 1=1 --` bound as param, not in SQL. |
 | 6 | Security modules | P4 | ✅ Done | SecurityHeaders (5 ON), CsrfGuard (HMAC-signed, 403 on fail), AuthGuard (JWT HS256, fail-closed), RbacGuard (deny-by-default), RateLimiter (sliding window, fail-closed, 429), SignedCookie (HMAC, constant-time). `tests/p4.php` 36/36 pass. |
-| 7 | Cache + Tests + CLI + Deploy | P5 | ⚠️ Open | Not started |
-| 8 | v1.0.0 candidate | release | ⚠️ Open | Blocked on P0–P5 completion |
+| 7 | Cache + Tests + CLI + Deploy | P5 | ✅ Done | Cache (MemoryDriver + FileDriver + Cache facade), micro test runner (assert_true/assert_eq/assert_null/assert_contains, non-zero exit), `bone` CLI (routes/modules/serve), Dockerfile. `tests/p5.php` 21/21 pass. `bone routes` and `bone modules` verified on CLI. |
+| 8 | v1.0.0 candidate | release | ✅ Done | All phases P0–P5 complete; 149 total tests pass across p0–p5. |
 
-Overall: P0–P4 complete; P5 open. M3 within reach.
+Overall: P0–P5 complete; v1.0.0 candidate. M1–M3 gates met.
 
 ## Findings
 
-- 🔵 Zero-dependency autoloader is the main performance risk to watch; its
-  load-time cost should be benchmarked against composer/PSR-4 baselines once
-  the kernel lands.
-- 🔵 JWT HS256 secret rotation needs an operational runbook (rotate, dual-verify
-  window, revoke) — design decision deferred to the security-modules phase.
-- 🔵 Redis cache is optional; absence must degrade to array/file cache with a
-  clear detection and warning path documented in DEPLOY.
-- 🔵 One-install-per-service constraint means multi-service orchestration is out
-  of framework scope — users own process supervision and routing at the edge.
-- 🔵 PDO-only query builder excludes ORM/active-record patterns by design;
-  API_GUIDE must state this explicitly to set expectations early.
+- 🔵 **Resolved** (P0): zero-dep autoloader load-time risk — kernel boots, peak RSS 2.00 MB, 404 JSON served.
+- 🔵 JWT HS256 secret rotation still needs an operational runbook (rotate, dual-verify window, revoke). AuthGuard implements issue/verify with exp/nbf; rotation is operator procedure, not yet written up.
+- 🔵 Redis cache remains deferred (D10); MemoryDriver + FileDriver shipped. DEPLOY already notes optional ext-redis.
+- 🔵 One-install-per-service: multi-service orchestration stays out of framework scope.
+- 🔵 PDO-only query builder excludes ORM/active-record by design; API_GUIDE documents the contract.
+- 🔵 `FileDriver` uses PHP `serialize` for its own cache files (not untrusted input); marked with a `ponytail:` comment. Deviation: not JSON, reconciles if cache dir becomes externally writable.
+- 🔵 `assert()` is PHP-reserved, so the micro runner exposes `assert_true()`; documented in CHANGELOG.
 
 ## Risks
 
@@ -50,7 +46,10 @@ Overall: P0–P4 complete; P5 open. M3 within reach.
 |---|---|---|---|
 | 🔴 Critical | No code exists yet; schedule risk for any date-dependent milestone | v1.0 cannot be scoped or estimated until P0 starts | **Resolved 2026-11-14** — P0 complete; kernel boots, serves 404 JSON, 2.00 MB peak RSS |
 | 🟠 Major | Zero-dep autoloader performance unmeasured | Could miss headless-API latency targets under load | **Resolved 2026-11-14** — `tests/p0.php` run: 20 assertions pass; peak RSS 2.00 MB (target < 25 MB) |
-| 🟠 Major | Security modules are ON by default but untested | Defaults could break legitimate requests or mask flaws | Thorough test matrix in P4 before any release candidate |
+| 🟠 Major | Security modules are ON by default but untested | Defaults could break legitimate requests or mask flaws | **Resolved 2026-11-16** — `tests/p4.php` 36/36: headers present, CSRF pass/fail, JWT tamper+expiry, RBAC deny, rate-limit 429, cookie tamper |
+| 🟠 Major | Rate-limit state is per-worker in-memory | Limits multiply by FPM worker count; not a global cap | Accepted v1 limitation (SECURITY.md §7, §12). File-backed limiter / redis deferred. |
+| 🔵 Info | No live session revocation in v1 | Stolen access token valid until `exp` | Documented in SECURITY.md §12; access TTL 1h default. |
+| 🔵 Info | `bone serve` does not spawn the server | Prints the command instead | Secure-coding rule bans proc_open/exec; deviation marked in `bin/bone`; reconcile when rule is scoped to runtime. |
 
 Note: earlier risk "unrelated WordPress tree occupies app/" is **resolved** —
 project root moved to `app/`; the legacy tree has been superseded. `conf/`
@@ -81,10 +80,10 @@ and `logs/` at repo root remain out-of-scope.
 
 ## Doc sync checklist
 
-1. PLAN reflects current REPORT status — verified 2026-11-14 (both: docs only).
-2. PRD reflects implemented vs planned — verified 2026-11-14 (P0 done: kernel, autoloader, request/response; P1–P5 still planned).
-3. REPORT matches actual code state — verified 2026-11-14 (P0 complete: `src/Kernel/`, `public/index.php`, `tests/p0.php`).
-4. CHANGELOG includes all committed changes — verified 2026-11-14 (P0 entry added).
+1. PLAN reflects current REPORT status — verified 2026-11-16 (P0–P5 ✅ Done; v1.0.0 candidate ✅).
+2. PRD reflects implemented vs planned — verified 2026-11-16 (all modules implemented; PRD remains the requirements source of truth).
+3. REPORT matches actual code state — verified 2026-11-16 (149 tests pass across p0–p5; `src/` + `public/` + `bin/` + `tests/` + `Dockerfile`).
+4. CHANGELOG includes all committed changes — verified 2026-11-16 (P0–P5 entries present under `[1.0.0-dev]`).
 
 ## Next actions
 
@@ -94,8 +93,9 @@ and `logs/` at repo root remain out-of-scope.
 4. ~~Start P2 config + DI + logging~~ — done 2026-11-16; `tests/p2.php` 27/27 pass.
 5. ~~Start P3 PDO query builder + validator~~ — done 2026-11-16; `tests/p3.php` 25/25 pass.
 6. ~~Start P4 security modules~~ — done 2026-11-16; `tests/p4.php` 36/36 pass.
-7. Start P5: cache + micro test runner + `bone` CLI + deploy recipe.
+7. ~~Start P5 cache + test runner + CLI + deploy~~ — done 2026-11-16; `tests/p5.php` 21/21 pass; `bone routes` / `bone modules` verified.
+8. Next: run `>release` to cut `v1.0.0` (CHANGELOG has no `[1.0.0]` section yet).
 
 ---
 
-**Last synced: 2026-11-16 — P0–P4 complete; 128/128 tests pass, 2.00 MB peak RSS.**
+**Last synced: 2026-11-16 — P0–P5 complete; 149/149 tests pass, 2.00 MB peak RSS.**

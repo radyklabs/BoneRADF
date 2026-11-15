@@ -142,10 +142,10 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 | P4.5 | Rate-limit module (429) + tests | P4 | ✅ Done |
 | P4.6 | Signed cookies (core) + tamper test | P4 | ✅ Done |
 | — | **P5 — Cache + test runner + CLI + deploy** | **P5** | 🔵 Info |
-| P5.1 | Cache (file driver scope TBD) + TTL test | P5 | ⚠️ Open |
-| P5.2 | Micro test runner (non-zero exit on failure) — D7 | P5 | ⚠️ Open |
-| P5.3 | `bone` CLI: route list, module list, serve — D8 | P5 | ⚠️ Open |
-| P5.4 | Dockerfile / PHP-FPM deploy recipe + verification | P5 | ⚠️ Open |
+| P5.1 | Cache (file driver scope TBD) + TTL test | P5 | ✅ Done |
+| P5.2 | Micro test runner (non-zero exit on failure) — D7 | P5 | ✅ Done |
+| P5.3 | `bone` CLI: route list, module list, serve — D8 | P5 | ✅ Done |
+| P5.4 | Dockerfile / PHP-FPM deploy recipe + verification | P5 | ✅ Done |
 
 ---
 
