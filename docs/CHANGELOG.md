@@ -25,13 +25,12 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - **Ordering**: newest version first; within a version, sections in the
   canonical order Added → Changed → Deprecated → Removed → Fixed → Security.
 
-## [1.0.0-dev] — Unreleased / In progress
+## [1.0.0] — 2026-11-16
 
 ### Added
 
 - Docs scaffold: `PRD.md`, `ARCHITECTURE.md`, `SECURITY.md`, `API_GUIDE.md`,
   `DEPLOY.md`, `PLAN.md`, `CHANGELOG.md`, `REPORT.md`.
-- No code changes yet — all work lives under `app/`.
 - Locked decisions D9–D10: memory target (<25 MB RSS), config precedence
   (env > file > defaults), router param syntax (`:id`), validation status
   (422), rate-limit fail mode (fail-closed), cache v1 (in-memory + file),
@@ -125,4 +124,20 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
-**Last synced: 2026-11-14 — project root moved to app/; docs scaffold complete; no code committed.**
+## [Unreleased] — In progress
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+---
+
+**Last synced: 2026-11-16 — v1.0.0 released: [1.0.0-dev] moved to [1.0.0]; fresh [Unreleased] section opened.**
