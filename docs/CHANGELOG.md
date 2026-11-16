@@ -25,6 +25,44 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - **Ordering**: newest version first; within a version, sections in the
   canonical order Added → Changed → Deprecated → Removed → Fixed → Security.
 
+## [Unreleased]
+
+### Added
+
+- **Module system (ARCHITECTURE §5, planned → implemented)**: `src/Module/Module.php`
+  (`boot(Container, Router, Pipeline)` interface) + module-aware autoloader
+  (`Boneradf\*` → `src/`, `Modules\*` → `modules/<Name>/src/` and
+  `modules/<Name>/`). Composition root `public/index.php` now registers
+  modules explicitly (no auto-discovery, no global registry).
+- **Auth module** (`modules/Auth/`): `AuthModule` (self-registers routes +
+  global CORS), `src/LoginService.php` (validate → query `users` →
+  `password_verify` → issue access + refresh JWT, timing-uniform dummy hash,
+  fail-closed on DB error), `seed.php` (idempotent `users` table + sample user
+  `boneradf`/`secret123` in DB `local`). Routes: `POST /api/auth/login`,
+  `POST /api/auth/refresh`, plus `OPTIONS` preflights. `tests/p6.php` — 16
+  assertions.
+- `src/Security/CorsMiddleware.php` (origin-allowlisted, preflight-aware,
+  global pipeline).
+
+### Changed
+
+- `public/index.php` no longer wires login inline — it is now a pure
+  composition root that boots the `AuthModule`. `LoginService` moved from
+  `src/Auth/` to `modules/Auth/src/` (development layer, not core).
+- `AuthGuard::issue()` now stamps `type: 'access'`; new
+  `AuthGuard::issueRefresh()` stamps `type: 'refresh'` with the 7d refresh TTL
+  (D10). `LoginService::refresh()` only accepts `type: 'refresh'` tokens and
+  returns a fresh access token — no refresh-token rotation (documented
+  ponytail; rotate when logout/revocation lands).
+- Autoloader extended for the `Modules\` namespace (PSR-4 per module).
+
+### Security
+
+- `CorsMiddleware` is origin-allowlisted and fails closed (no CORS headers for
+  unknown origins); preflight `OPTIONS` routes return 204. `users` table uses
+  a prepared statement keyed on `username`; passwords stored via
+  `password_hash()` (Bcrypt/Pbkdf2 via `PASSWORD_DEFAULT`).
+
 ## [1.0.0] — 2026-11-16
 
 ### Added

@@ -64,6 +64,29 @@ final class AuthGuard implements Middleware
             'iat' => $now,
             'nbf' => $now,
             'exp' => $now + $this->accessTtl,
+            'type' => 'access',
+        ], $claims);
+
+        $h = $this->base64UrlEncode(json_encode($header, JSON_THROW_ON_ERROR));
+        $p = $this->base64UrlEncode(json_encode($claims, JSON_THROW_ON_ERROR));
+        $sig = hash_hmac('sha256', $h . '.' . $p, $this->secret, true);
+        return $h . '.' . $p . '.' . $this->base64UrlEncode($sig);
+    }
+
+    /**
+     * Issue a refresh-token JWT with the longer refresh TTL (D10: 7d).
+     *
+     * @param array<string, mixed> $claims  sub + role (no type marker; added here)
+     */
+    public function issueRefresh(array $claims): string
+    {
+        $claims['type'] = 'refresh';
+        $header = ['alg' => $this->algo, 'typ' => 'JWT'];
+        $now = time();
+        $claims = array_merge([
+            'iat' => $now,
+            'nbf' => $now,
+            'exp' => $now + $this->refreshTtl,
         ], $claims);
 
         $h = $this->base64UrlEncode(json_encode($header, JSON_THROW_ON_ERROR));

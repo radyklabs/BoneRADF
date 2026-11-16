@@ -146,6 +146,13 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 | P5.2 | Micro test runner (non-zero exit on failure) — D7 | P5 | ✅ Done |
 | P5.3 | `bone` CLI: route list, module list, serve — D8 | P5 | ✅ Done |
 | P5.4 | Dockerfile / PHP-FPM deploy recipe + verification | P5 | ✅ Done |
+| — | **Post-v1 sample: login feature (end-to-end)** | **post-v1** | 🔵 Info |
+| P6.0 | Sample DB: `modules/Auth/seed.php` idempotent — `users` table + seed user in DB `local` | post-v1 | ✅ Done |
+| P6.1 | Module system: `src/Module/Module.php` interface + module-aware autoloader (`Modules\*`) | post-v1 | ✅ Done |
+| P6.2 | `AuthModule` (`modules/Auth/AuthModule.php`) — self-registers login/refresh routes + global CORS | post-v1 | ✅ Done |
+| P6.3 | `modules/Auth/src/LoginService.php` (validate → query → `password_verify` → issue access+refresh, timing-uniform dummy hash) | post-v1 | ✅ Done |
+| P6.4 | `public/index.php` = composition root (boots `AuthModule`, no inline login wiring) | post-v1 | ✅ Done |
+| P6.5 | `tests/p6.php` — 16/16 pass; live HTTP smoke (login 200, wrong 401, empty 422, preflight 204, refresh 200, evil-origin no-CORS) | post-v1 | ✅ Done |
 
 ---
 
@@ -165,4 +172,4 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 - New file paths in `src/` are planned until created; do not cite them as existing.
 - Scope changes mid-phase: accept / defer / reject explicitly — never silently absorb.
 
-Last synced: 2026-11-16 — P0–P5 complete; M1–M3 gates met; v1.0.0 candidate.
+Last synced: 2026-11-16 — P0–P5 complete; M1–M3 gates met; v1.0.0 candidate. Post-v1: module system (§5) + Auth module implemented (P6.0–P6.5) ✅ — `users` table seeded in DB `local`, `/api/auth/login` + `/api/auth/refresh` live via `AuthModule`, CORS preflight-aware, 16/16 p6 tests.

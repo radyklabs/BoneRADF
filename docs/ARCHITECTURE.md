@@ -86,22 +86,29 @@ Light, first-class, explicit. Deliberately not a full container.
 
 ## 5. Module contract
 
-A BoneRADF module is a PSR-4 package directory under `modules/` that self-registers via one interface.
+A BoneRADF module is a PSR-4 package directory under `modules/` that
+self-registers via one interface. **Implemented post-v1.0** (was planned at the
+v1.0 candidate).
 
 ```
 modules/
   <ModuleName>/
-    src/            (PSR-4, e.g. Modules\ModuleName\)
-    module.php      (or Module class — exact bootstrap file: TBD)
+    src/              (PSR-4, namespace Modules\<ModuleName>\)
+    <ModuleName>Module.php  (module bootstrap class, at module root)
+    <module>.php      (optional: seed / migration / bootstrap scripts)
 ```
 
-Minimal contract (planned, names indicative):
+Autoloading: the custom PSR-4 autoloader maps
+`Modules\<Name>\X` → `modules/<Name>/src/X.php` (and checks
+`modules/<Name>/X.php` for the bootstrap class). No Composer, no auto-discovery.
+
+Minimal contract (implemented):
 
 ```
-interface Module
+interface Module  // src/Module/Module.php
 {
     public function name(): string;
-    public function boot(Container $container, Router $router, MiddlewarePipeline $pipeline): void;
+    public function boot(Container $container, Router $router, Pipeline $pipeline): void;
 }
 ```
 
@@ -109,12 +116,21 @@ A module may, inside `boot()`:
 
 - bind services into the container (explicit bindings only, §4);
 - register routes (§6);
-- register middleware onto the pipeline (§5 order: core defense middleware is registered first and cannot be reordered away by modules; modules append or insert relative to their own group — exact enforcement: TBD);
+- register middleware onto the pipeline (§7 order: core defense middleware is
+  registered first and cannot be reordered away by modules; modules append);
 - register config keys with defaults.
 
-A module must NOT: write to globals, emit output during boot, or mutate another module's bindings. Installable security modules (SecurityHeaders, CSRF, Auth JWT+cookie, RBAC, RateLimit) ship as modules and are ON by default — they follow the same contract; they are simply pre-registered by the Kernel.
+A module must NOT: write to globals, emit output during boot, or mutate
+another module's bindings. Installable security modules (SecurityHeaders,
+CSRF, Auth JWT+cookie, RBAC, RateLimit) ship as modules and are ON by default
+— they follow the same contract; they are simply pre-registered by the Kernel.
 
-Keep the interface this small on purpose. If a module needs lifecycle hooks beyond `boot()` (shutdown, hot-reload), add them then — YAGNI until a real module needs them.
+**Composition root** (`public/index.php`) is the single place modules are
+instantiated and booted. Registration is explicit (a hardcoded `$modules`
+list), not auto-discovery, so the active module set is greppable and
+reviewable. This preserves §7's "no `global()` leakage" rule.
+
+The first module is `modules/Auth/` (login + refresh + CORS + `users` seed).
 
 ---
 
@@ -252,4 +268,4 @@ The container is the single composition root: extending the framework = binding 
 
 ---
 
-Last synced: 2026-11-14 — project root moved to app/; decisions from user Q&A locked.
+Last synced: 2026-11-16 — §5 module contract implemented (module system + first `AuthModule`); project root at `app/`.

@@ -27,12 +27,14 @@ values. Use `app/docs/CONFIG.sample.md` as the template; never commit
 
 ### Present
 ```
-app/      — BoneRADF project root (this file, docs, planned src)
+app/      — BoneRADF project root (this file, docs, src, modules, tests)
   CLAUDE.md   — this file
   docs/       — project documentation (sync set + RULES + CONFIG below)
-  public/     — front controller + webroot (planned)
-  src/        — PSR-4 root for Boneradf\ (planned)
-  bin/        — CLI binary: bone (planned)
+  public/     — front controller (composition root) + webroot
+  src/        — PSR-4 root for Boneradf\ (core framework)
+  modules/    — development layer: PSR-4 modules (namespace Modules\<Name>\)
+  bin/        — CLI binary: bone
+  tests/      — micro test suite (p0–p6)
   sample_frontdev/ — frontend test scaffold (gitignored, not part of framework)
 conf/     — apache / php-fpm config templates; NOT part of BoneRADF
 logs/     — legacy logs; NOT part of BoneRADF
@@ -51,23 +53,30 @@ app/docs/…                  — additional docs as created
 app/CLAUDE.md               — this file
 ```
 
-### Planned src/ layout (not yet created — mark as "planned" until implemented)
+### src/ + modules/ layout (present)
 ```
-public/index.php          — front controller (planned)
-bin/bone                  — CLI binary: routes, modules, serve (planned)
-src/                      — PSR-4 root for Boneradf\ (planned)
-  Kernel/                 — bootstrap & request lifecycle (planned)
-  Router/                 — routing, `:param` syntax (planned)
-  Middleware/             — PSR-15-style pipeline (planned)
-  Container/              — light DI, explicit bindings only (planned)
-  Config/                 — typed config, env > file > defaults (planned)
-  Logger/                 — structured logging (planned)
-  Database/               — PDO query builder, prepared statements only (planned)
-  Validator/              — strict validation, 422 on fail (planned)
+public/index.php          — front controller / composition root (boots modules)
+bin/bone                  — CLI binary: routes, modules, serve
+src/                      — PSR-4 root for Boneradf\ (core framework)
+  Kernel/                 — bootstrap & request lifecycle
+  Router/                 — routing, `:param` syntax
+  Middleware/             — PSR-15-style pipeline
+  Container/              — light DI, explicit bindings only
+  Config/                 — typed config, env > file > defaults
+  Logger/                 — structured logging
+  Database/               — PDO query builder, prepared statements only
+  Validator/              — strict validation, 422 on fail
   Security/               — SecurityHeaders, CSRF, Auth (JWT HS256), RBAC,
-                            RateLimit (fail-closed) — ON by default (planned)
-  Cache/                  — in-memory + file drivers only in v1 (planned)
-  Test/                   — built-in micro test runner (planned)
+                            RateLimit, CorsMiddleware — ON by default
+  Cache/                  — in-memory + file drivers only in v1
+  Test/                   — built-in micro test runner
+  Module/                 — Module interface (§5 module contract)
+modules/                  — development layer (PSR-4, namespace Modules\<Name>\)
+  Auth/                   — first module: login + refresh + CORS + users seed
+    AuthModule.php        — module bootstrap class (implements Boneradf\Module\Module)
+    src/LoginService.php  — credential check + JWT issuance
+    seed.php              — idempotent `users` table + sample user bootstrap
+tests/                    — micro test suite p0–p6
 ```
 
 ## Docs Sync Rule
