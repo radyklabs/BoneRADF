@@ -66,50 +66,55 @@ final class AuthModule implements Module
 
     private function registerRoutes(Router $router, LoginService $login): void
     {
-        // POST /api/auth/login — { username, password } → { access, refresh, user }
-        $router->post('/api/auth/login', function (Request $req) use ($login): Response {
-            $body     = $req->body();
-            $username = (string)($body['username'] ?? '');
-            $password = (string)($body['password'] ?? '');
+        // All auth endpoints live under the `/api/auth` module prefix,
+        // registered via Router::group so module-scoped paths stay relative
+        // to the module. Public URLs: /api/auth/login, /api/auth/refresh.
+        $router->group('/api/auth', function (Router $r) use ($login): void {
+            // POST /login — { username, password } → { access, refresh, user }
+            $r->post('/login', function (Request $req) use ($login): Response {
+                $body     = $req->body();
+                $username = (string)($body['username'] ?? '');
+                $password = (string)($body['password'] ?? '');
 
-            $result = (new Validator(['username' => $username, 'password' => $password]))->validate([
-                'username' => 'required|string|min:1|max:60',
-                'password' => 'required|string|min:1|max:255',
-            ]);
-            if ($result->fails()) {
-                return Response::error('VALIDATION_FAILED', 'Validation failed.', 422, ['errors' => $result->errors()]);
-            }
+                $result = (new Validator(['username' => $username, 'password' => $password]))->validate([
+                    'username' => 'required|string|min:1|max:60',
+                    'password' => 'required|string|min:1|max:255',
+                ]);
+                if ($result->fails()) {
+                    return Response::error('VALIDATION_FAILED', 'Validation failed.', 422, ['errors' => $result->errors()]);
+                }
 
-            [$ok, $tokens] = $login->attempt($username, $password);
-            if (!$ok) {
-                return Response::error('INVALID_CREDENTIALS', 'Invalid credentials.', 401);
-            }
+                [$ok, $tokens] = $login->attempt($username, $password);
+                if (!$ok) {
+                    return Response::error('INVALID_CREDENTIALS', 'Invalid credentials.', 401);
+                }
 
-            return Response::json([
-                'access'  => $tokens['access'],
-                'refresh' => $tokens['refresh'],
-                'user'    => $tokens['user'],
-            ]);
+                return Response::json([
+                    'access'  => $tokens['access'],
+                    'refresh' => $tokens['refresh'],
+                    'user'    => $tokens['user'],
+                ]);
+            });
+
+            // POST /refresh — { refreshToken } → { access }.
+            // Intentionally no rotation: the same refresh token is re-usable
+            // until it expires (D10 7d). Rotate when logout/revocation lands.
+            $r->post('/refresh', function (Request $req) use ($login): Response {
+                $refreshToken = (string)($req->body()['refreshToken'] ?? '');
+                $newAccess    = $login->refresh($refreshToken);
+                if ($newAccess === null) {
+                    return Response::error('INVALID_REFRESH_TOKEN', 'Invalid or expired refresh token.', 401);
+                }
+                return Response::json(['access' => $newAccess]);
+            });
+
+            // Preflight (OPTIONS) routes: the router has no wildcard; without
+            // these a bare OPTIONS would 405. The global CORS middleware
+            // attaches the headers; the handler just returns 204.
+            $preflight = fn (): Response => Response::noContent(204);
+            $r->add('OPTIONS', '/login',   $preflight);
+            $r->add('OPTIONS', '/refresh', $preflight);
         });
-
-        // POST /api/auth/refresh — { refreshToken } → { access }.
-        // Intentionally no rotation: the same refresh token is re-usable until
-        // it expires (D10 7d). Rotate when logout/revocation lands.
-        $router->post('/api/auth/refresh', function (Request $req) use ($login): Response {
-            $refreshToken = (string)($req->body()['refreshToken'] ?? '');
-            $newAccess    = $login->refresh($refreshToken);
-            if ($newAccess === null) {
-                return Response::error('INVALID_REFRESH_TOKEN', 'Invalid or expired refresh token.', 401);
-            }
-            return Response::json(['access' => $newAccess]);
-        });
-
-        // Preflight (OPTIONS) routes: the router has no wildcard; without these
-        // a bare OPTIONS would 405. The global CORS middleware attaches the
-        // headers; the handler just returns 204.
-        $preflight = fn (): Response => Response::noContent(204);
-        $router->add('OPTIONS', '/api/auth/login',   $preflight);
-        $router->add('OPTIONS', '/api/auth/refresh', $preflight);
     }
 
     /**

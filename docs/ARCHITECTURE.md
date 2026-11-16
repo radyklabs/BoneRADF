@@ -115,7 +115,10 @@ interface Module  // src/Module/Module.php
 A module may, inside `boot()`:
 
 - bind services into the container (explicit bindings only, §4);
-- register routes (§6);
+- register routes (§6) — typically under a module-scoped prefix via
+  `Router::group('<prefix>', …)` so the module's routes are relative to its
+  own URL segment (e.g. `AuthModule` registers `/login` under group prefix
+  `/api/auth` → public URL `/api/auth/login`);
 - register middleware onto the pipeline (§7 order: core defense middleware is
   registered first and cannot be reordered away by modules; modules append);
 - register config keys with defaults.

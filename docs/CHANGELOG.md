@@ -46,6 +46,11 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- `AuthModule` now registers its endpoints via `Router::group('/api/auth', …)`
+  (module-scoped relative paths: `/login`, `/refresh`, plus `OPTIONS`
+  preflights) instead of flat `/api/auth/*` paths. Public URLs are unchanged
+  (`/api/auth/login`, `/api/auth/refresh`); the change is the registration
+  mechanism — module routes are now scoped to the module's prefix.
 - `public/index.php` no longer wires login inline — it is now a pure
   composition root that boots the `AuthModule`. `LoginService` moved from
   `src/Auth/` to `modules/Auth/src/` (development layer, not core).
