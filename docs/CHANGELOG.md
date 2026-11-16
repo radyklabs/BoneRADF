@@ -46,14 +46,17 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- `AuthModule` now registers its endpoints via `Router::group('/api/auth', …)`
-  (module-scoped relative paths: `/login`, `/refresh`, plus `OPTIONS`
-  preflights) instead of flat `/api/auth/*` paths. Public URLs are unchanged
-  (`/api/auth/login`, `/api/auth/refresh`); the change is the registration
-  mechanism — module routes are now scoped to the module's prefix.
-- `public/index.php` no longer wires login inline — it is now a pure
-  composition root that boots the `AuthModule`. `LoginService` moved from
-  `src/Auth/` to `modules/Auth/src/` (development layer, not core).
+- **`Router::group` default URL prefix** — `group($prefix)` now prepends
+  `Router::DEFAULT_URL_PREFIX` (`/api`) so a module registers
+  `group('/auth', …)` → `/api/auth/…` without writing `/api` itself. Custom
+  or no prefix via explicit `$urlPrefix` arg: `group('/health', …, '')` →
+  `/health/…`. Direct `add()` routes (e.g. `/health`, `/hello` in
+  `public/index.php`) are unaffected — they resolve as written. `AuthModule`
+  now calls `group('/auth')` instead of `group('/api/auth')`. Public URLs
+  unchanged; the change is that module-scoped prefixes no longer carry the
+  API segment.
+- `AuthModule` registers endpoints via `Router::group('/auth', …)` (relative
+  paths) instead of flat `/api/auth/*` registrations. Public URLs unchanged.
 - `AuthGuard::issue()` now stamps `type: 'access'`; new
   `AuthGuard::issueRefresh()` stamps `type: 'refresh'` with the 7d refresh TTL
   (D10). `LoginService::refresh()` only accepts `type: 'refresh'` tokens and

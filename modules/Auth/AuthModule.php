@@ -66,10 +66,11 @@ final class AuthModule implements Module
 
     private function registerRoutes(Router $router, LoginService $login): void
     {
-        // All auth endpoints live under the `/api/auth` module prefix,
-        // registered via Router::group so module-scoped paths stay relative
-        // to the module. Public URLs: /api/auth/login, /api/auth/refresh.
-        $router->group('/api/auth', function (Router $r) use ($login): void {
+        // Auth endpoints live under the module's URL segment. `group('/auth')`
+        // is namespaced under the default `/api` prefix (Router::DEFAULT_URL_PREFIX),
+        // so the public URLs are /api/auth/login and /api/auth/refresh. The
+        // module only knows its own segment, not the API prefix.
+        $router->group('/auth', function (Router $r) use ($login): void {
             // POST /login — { username, password } → { access, refresh, user }
             $r->post('/login', function (Request $req) use ($login): Response {
                 $body     = $req->body();

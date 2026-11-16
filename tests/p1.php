@@ -56,15 +56,25 @@ check('router pathExists detects 405', $router->pathExists('/users') === true);
 check('router pathExists false for unknown', $router->pathExists('/unknown') === false);
 
 // --- Router: group ---
+// group($prefix) prepends the default /api URL prefix (Router::DEFAULT_URL_PREFIX).
+// A module that wants a custom (or no) prefix passes $urlPrefix explicitly.
 $router2 = new Router();
-$router2->group('/api/v1', function (Router $r) {
+$router2->group('/v1', function (Router $r) {
     $r->get('/status', fn () => ['v' => 1]);
     $r->get('/items/:id', fn ($req, $p) => ['id' => $p['id']]);
 });
 $match = $router2->match(new Request('GET', '/api/v1/status'));
-check('router group prefix match', $match !== null && $match['route']->pattern() === '/api/v1/status');
+check('router group default /api prefix match', $match !== null && $match['route']->pattern() === '/api/v1/status');
 $match = $router2->match(new Request('GET', '/api/v1/items/7'));
-check('router group param match', $match !== null && $match['params']['id'] === '7');
+check('router group default prefix param match', $match !== null && $match['params']['id'] === '7');
+
+// Opt-out: explicit empty URL prefix → no /api namespacing.
+$router3 = new Router();
+$router3->group('/health', function (Router $r) {
+    $r->get('/ping', fn () => ['ok' => true]);
+}, '');
+$match = $router3->match(new Request('GET', '/health/ping'));
+check('router group opt-out (no /api) match', $match !== null && $match['route']->pattern() === '/health/ping');
 
 // --- Router: enumeration ---
 check('router routes() count', count($router2->routes()) === 2);

@@ -16,6 +16,9 @@ use Boneradf\Middleware\Middleware;
  */
 final class Router
 {
+    /** Default URL prefix prepended to module group prefixes. */
+    public const DEFAULT_URL_PREFIX = '/api';
+
     /** @var Route[] */
     private array $routes = [];
 
@@ -73,15 +76,23 @@ final class Router
     /**
      * Register a route group with a shared prefix.
      *
-     * @param string   $prefix
-     * @param callable $fn  fn(Router $r) — registers routes inside
+     * The group prefix is prepended to a default URL prefix (`/api` by
+     * default) so module routes are namespaced under the API segment:
+     * `group('/auth', …)` registers `/api/auth/…`. A module that wants a
+     * different (or no) URL prefix passes `$urlPrefix` explicitly —
+     * `group('/health', …, '')` registers `/health/…`.
+     *
+     * @param string   $prefix      module-scoped prefix (e.g. `/auth`)
+     * @param callable $fn          fn(Router $r) — registers routes inside
+     * @param string   $urlPrefix   URL prefix prepended to `$prefix` (default `/api`)
      */
-    public function group(string $prefix, callable $fn): void
+    public function group(string $prefix, callable $fn, string $urlPrefix = self::DEFAULT_URL_PREFIX): void
     {
         $inner = new self();
         $fn($inner);
+        $fullPrefix = $urlPrefix . $prefix;
         foreach ($inner->routes as $route) {
-            $prefixed = $prefix . $route->pattern();
+            $prefixed = $fullPrefix . $route->pattern();
             $this->routes[] = new Route(
                 $route->method(),
                 $prefixed,
