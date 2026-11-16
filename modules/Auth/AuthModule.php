@@ -141,6 +141,7 @@ final class AuthModule implements Module
             'http://localhost:8080',
             'http://127.0.0.1:8080',
             'http://boneradfw.local',
+            'http://faceradfw.local',
             'http://localhost',
             'http://127.0.0.1',
         ];
