@@ -29,8 +29,9 @@ Project root is `app/` — all BoneRADF code and docs live there.
 | 8 | v1.0.0 candidate | release | ✅ Done | All phases P0–P5 complete; 149 total tests pass across p0–p5. |
 | 9 | Sample login feature | post-v1 | ✅ Done | `AuthModule` (`modules/Auth/`) exposes `/api/auth/login` + `/api/auth/refresh` + global CORS, wired via composition root `public/index.php`; `modules/Auth/seed.php` creates `users` table + seed user `boneradf` in DB `local` (10028, root/root); `tests/p6.php` 16/16. Live HTTP: login 200 (CORS headers on allowed origin), wrong pass 401, empty 422, preflight 204, refresh 200, unknown origin → no CORS headers (fail-closed). |
 | 10 | Module system (§5) | post-v1 | ✅ Done | `src/Module/Module.php` interface (`boot(Container, Router, Pipeline)`) + module-aware autoloader (`Modules\*` → `modules/<Name>/src/` and module root). Composition root registers modules explicitly (no auto-discovery, no global registry — preserves §7 no-global-leakage). `AuthModule` is the first module. |
+| 11 | Resources module | post-v1 | ✅ Done | `ResourcesModule` (`modules/Resources/`) CRUD over `resources` table: GET/POST list+create, GET/PUT/DELETE by id, name validation (422 field errors), preflight OPTIONS. Seed 3 rows (Alpha, Beta, Gamma). Live CRUD: list 3 rows, create 201, update, delete 204, preflight 204 + CORS. |
 
-Overall: P0–P5 complete; v1.0.0 candidate. M1–M3 gates met. Post-v1 sample login feature done (P6).
+Overall: P0–P5 complete; v1.0.0 candidate. M1–M3 gates met. Post-v1 module system (P6) + Auth + Resources modules done.
 
 ## Findings
 

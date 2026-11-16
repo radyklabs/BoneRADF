@@ -153,6 +153,10 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 | P6.3 | `modules/Auth/src/LoginService.php` (validate → query → `password_verify` → issue access+refresh, timing-uniform dummy hash) | post-v1 | ✅ Done |
 | P6.4 | `public/index.php` = composition root (boots `AuthModule`, no inline login wiring) | post-v1 | ✅ Done |
 | P6.5 | `tests/p6.php` — 16/16 pass; live HTTP smoke (login 200, wrong 401, empty 422, preflight 204, refresh 200, evil-origin no-CORS) | post-v1 | ✅ Done |
+| P7.0 | `modules/Resources/seed.php` — idempotent `resources` table + Alpha/Beta/Gamma | post-v1 | ✅ Done |
+| P7.1 | `modules/Resources/src/ResourceService.php` — CRUD (prepared statements, name validation) | post-v1 | ✅ Done |
+| P7.2 | `modules/Resources/ResourcesModule.php` — GET list/create, GET/PUT/DELETE by id + OPTIONS preflights | post-v1 | ✅ Done |
+| P7.3 | Live CRUD smoke: list 3 rows, create 201, update, delete 204, preflight 204 + CORS | post-v1 | ✅ Done |
 
 ---
 

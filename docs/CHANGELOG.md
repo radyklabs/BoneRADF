@@ -39,8 +39,13 @@ Versions follow [Semantic Versioning](https://semver.org/).
   `password_verify` → issue access + refresh JWT, timing-uniform dummy hash,
   fail-closed on DB error), `seed.php` (idempotent `users` table + sample user
   `boneradf`/`secret123` in DB `local`). Routes: `POST /api/auth/login`,
-  `POST /api/auth/refresh`, plus `OPTIONS` preflights. `tests/p6.php` — 16
-  assertions.
+  `POST /api/auth/refresh`, plus `OPTIONS` preflights, and the global
+  `GET /api/csrf-token` boot endpoint. `tests/p6.php` — 16 assertions.
+- **Resources module** (`modules/Resources/`): `ResourcesModule` + `src/ResourceService.php`
+  + `seed.php` (idempotent `resources` table + Alpha/Beta/Gamma rows). CRUD:
+  `GET /api/resources` (list), `POST /api/resources`, `GET/PUT/DELETE
+  /api/resources/:id`. Name validated (`required|string|1..191`) → 422 with
+  field errors; unknown id → 404; delete → 204.
 - `src/Security/CorsMiddleware.php` (origin-allowlisted, preflight-aware,
   global pipeline).
 

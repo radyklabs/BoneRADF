@@ -116,6 +116,18 @@ final class AuthModule implements Module
             $r->add('OPTIONS', '/login',   $preflight);
             $r->add('OPTIONS', '/refresh', $preflight);
         });
+
+        // GET /api/csrf-token — global (not under the /auth segment). The SPA's
+        // boot (main.ts) calls this on every page load; without it the browser
+        // blocks the preflight because a 404 from the kernel bypasses the
+        // middleware pipeline (no CORS headers → preflight fails). The SPA uses
+        // token auth (access in memory, refresh in sessionStorage), not cookie
+        // sessions, so a CSRF token is not strictly required; this route
+        // exists so the boot request succeeds and CORS headers are present.
+        // ponytail: a real signed CSRF token (CsrfGuard::issue()) lands when
+        // cookie-session auth ships; today return a static empty token.
+        $router->get('/api/csrf-token', fn (): Response => Response::json(['token' => '']));
+        $router->add('OPTIONS', '/api/csrf-token', fn (): Response => Response::noContent(204));
     }
 
     /**

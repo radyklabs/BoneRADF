@@ -33,6 +33,7 @@ $router->get('/hello',  fn () => ['message' => 'Hello, world!']);
 /** @var array<int, Module> $modules */
 $modules = [
     new \Modules\Auth\AuthModule(),
+    new \Modules\Resources\ResourcesModule(),
 ];
 
 foreach ($modules as $module) {
