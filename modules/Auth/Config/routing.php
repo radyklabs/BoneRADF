@@ -7,9 +7,9 @@ use Modules\Auth\Controllers\AuthController;
 /**
  * Auth module route contributions.
  *
- * Additive to src/Manifest/Routing.php; merged by Boot. A module not listed
- * in src/Manifest/Modules.php cannot register routes — this file is inert
- * unless the module is active.
+ * Additive to src/Manifest/Routing.php; merged by Boot. This file is also
+ * the module's activation switch: an empty array keeps the module inert
+ * (auto-discovered but never booted).
  *
  * @return array<string, array{0: class-string, 1: string}>
  */

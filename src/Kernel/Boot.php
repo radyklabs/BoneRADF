@@ -4,7 +4,6 @@ namespace Boneradf\Kernel;
 
 use Boneradf\Container\Container;
 use Boneradf\Kernel\Kernel;
-use Boneradf\Manifest\Modules;
 use Boneradf\Manifest\Routing;
 // use Boneradf\Contracts\Module;
 use Boneradf\Middleware\Pipeline;
@@ -24,16 +23,18 @@ use RuntimeException;
 final class Boot
 {
     private static bool $initialized = false;
-    private static bool $discoverModules = true;
+    private static bool $bootModules = true;
     private static string $basepath = '';
     private static string $nssys = 'Boneradf\\';
     private static string $nsmod = 'Modules\\';
 
     public static function init (): Kernel
     {
-        if (self::$initialized) {
+        if (self::$initialized)
+        {
             throw new RuntimeException ('Boot: init() already called.');
         }
+        
         self::$initialized = true;
 
         self::registerAutoloader ();
@@ -43,10 +44,13 @@ final class Boot
         $container = new Container ();
 
         $seen = [];
+        
         self::registerRoutes ($router, Routing::aliases (), $container, $seen);
 
-        if (self::$discoverModules) {
-            foreach (self::activeModules () as $name => $module) {
+        if (self::$bootModules)
+        {
+            foreach (self::activeModules () as $name => $module)
+            {
                 self::registerRoutes ($router, self::moduleRoutes ($name), $container, $seen);
                 $module->boot ($container, $router, $pipeline);
             }
@@ -56,12 +60,12 @@ final class Boot
     }
 
     /**
-     * Disable module discovery + boot (test harness, no-DB CLI).
-     * Default: discovery on (production path).
+     * Disable module boot entirely (test harness, no-DB CLI).
+     * Default: module boot on (production path).
      */
     public static function withoutModules (): Kernel
     {
-        self::$discoverModules = false;
+        self::$bootModules = false;
         return self::init ();
     }
 
@@ -79,7 +83,8 @@ final class Boot
 
         self::registerRoutes ($router, Routing::aliases (), $container, $seen);
 
-        foreach (Modules::list () as $name) {
+        foreach (self::discoveredModules () as $name)
+        {
             self::registerRoutes ($router, self::moduleRoutes ($name), $container, $seen);
         }
 
@@ -90,35 +95,15 @@ final class Boot
      * PSR-4 autoloader — single source of truth for class resolution.
      *
      *   Boneradf\X\Y   → <root>/src/X/Y.php
-     *   Modules\Name\X → <root>/modules/Name/src/X.php
-     *                   → <root>/modules/Name/X.php   (module bootstrap class)
+     *   Modules\Name\X → <root>/modules/Name/X.php
      */
-    public static function autoload (string $class): void
+    public static function runAutoloader (string $class): void
     {
-        // CLI (bin/bone) memanggil registerAutoloader() tanpa init() —
-        // inisialisasi basepath di sini menjamin jalur autoload mana pun aman.
-        if (self::$basepath === '') {
-            self::$basepath = dirname(__DIR__, 2);
-        }
-        require_once self::$basepath . '/.supports';
-
-        if (!defined ('sep'))
-        {
-            define ('basepath', self::$basepath);
-            define ('sep', DIRECTORY_SEPARATOR);
-
-            $index_file = self::$basepath . '/public/index.php';
-
-            foreach (read_directories ($index_file) as $type => $dir)
-            {
-                define ($type, interlace (basepath, $dir));
-            }
-        }
-
         if (str_starts_with ($class, self::$nssys))
         {
             $system_file = interlace ( system, substr ($class, strlen (self::$nssys)) . '.php');
-            if (is_readable ($system_file)) {
+            if (is_readable ($system_file))
+            {
                 require $system_file;
             }
             return;
@@ -127,22 +112,23 @@ final class Boot
         if (str_starts_with ($class, self::$nsmod))
         {
             $module_file = interlace (modules, substr ($class, strlen (self::$nsmod)).'.php');
-            if (is_readable ($module_file)) {
+            if (is_readable ($module_file))
+            {
                 require $module_file;
                 return;
             }
         }
     }
 
-    private static function root (): string
-    {
-        return dirname (__DIR__, 2);
-    }
+    // private static function root (): string
+    // {
+    //     return dirname (__DIR__, 2);
+    // }
 
-    private static function modulesDir (): string
-    {
-        return self::root () . '/modules';
-    }
+    // private static function modulesDir (): string
+    // {
+    //     return self::root () . '/modules';
+    // }
 
     /**
      * Register default + module-declared aliases onto the router.
@@ -158,10 +144,12 @@ final class Boot
      */
     private static function registerRoutes (Router $router, array $aliases, Container $container, array &$seen): void
     {
-        foreach ($aliases as $alias => $handler) {
+        foreach ($aliases as $alias => $handler)
+        {
             [$method, $pattern] = self::splitAlias ($alias);
             $key = $method . ' ' . $pattern;
-            if (isset ($seen[$key])) {
+            if (isset ($seen[$key]))
+            {
                 throw new RuntimeException ("Boot: duplicate route alias '{$alias}'.");
             }
             $seen[$key] = true;
@@ -174,7 +162,8 @@ final class Boot
      */
     private static function handler (array $handler, Container $container): callable
     {
-        return static function (Request $req, array $params) use ($handler, $container) {
+        return static function (Request $req, array $params) use ($handler, $container)
+        {
             [$class, $method] = $handler;
             $controller = $container->has ($class)
                 ? $container->get ($class)
@@ -188,11 +177,13 @@ final class Boot
      */
     private static function moduleRoutes (string $name): array
     {
-        $file = self::modulesDir () . '/' . $name . '/Config/routing.php';
-        if (!is_file ($file)) {
+        $module_file = interlace (modules, $name, 'Config/routing.php');
+        
+        if (!is_readable ($module_file)) {
             return [];
         }
-        return require $file;
+
+        return require $module_file;
     }
 
     /**
@@ -208,30 +199,66 @@ final class Boot
     }
 
     /**
-     * Discover + topologically sort active modules declared in
-     * src/Manifest/Modules.php. Fail-closed on missing dir / class, cycle,
-     * or unknown dependency.
+     * System-level auto-discovery: every directory under modules/ that ships
+     * `Config/modules.php` is a known module. Activation is separate — see
+     * activeModules().
+     *
+     * @return list<string>  sorted module names.
+     */
+    private static function discoveredModules (): array
+    {
+        $entries = scandir (interlace (modules));
+        if ($entries === false)
+        {
+            return [];
+        }
+
+        $names = [];
+        foreach ($entries as $entry)
+        {
+            if ($entry === '.' || $entry === '..') { continue; }
+            if (is_file (interlace (modules, $entry, 'Config/modules.php')))
+            {
+                $names[] = $entry;
+            }
+        }
+        sort ($names);
+        return $names;
+    }
+
+    /**
+     * Resolve + topologically sort ACTIVE modules. A discovered module is
+     * active only when its Config/routing.php declares at least one route —
+     * that file is the module's own activation switch (ARCHITECTURE §5).
+     * Inactive modules are never booted. Fail-closed on missing class, cycle,
+     * or unknown/inactive dependency.
      *
      * @return array<string, Module>  keyed by module name, boot order.
      */
     private static function activeModules (): array
     {
-        $active = Modules::list ();
-
         /** @var array<string, array{class: class-string, depends_on: list<string>}> $catalog */
         $catalog = [];
-        foreach ($active as $name) {
+        foreach (self::discoveredModules () as $name)
+        {
+            if (self::moduleRoutes ($name) === [])
+            {
+                continue; // inert: no routes declared → never booted.
+            }
             $catalog[$name] = self::moduleConfig ($name);
         }
 
         $indeg      = [];
         $dependents = [];
-        foreach ($catalog as $name => $info) {
+        foreach ($catalog as $name => $info)
+        {
             $deps = array_values (array_filter ($info['depends_on'], fn ($d) => $d !== $name));
             $catalog[$name]['depends_on'] = $deps;
             $indeg[$name] = count ($deps);
-            foreach ($deps as $dep) {
-                if (!isset ($catalog[$dep])) {
+            foreach ($deps as $dep)
+            {
+                if (!isset ($catalog[$dep]))
+                {
                     throw new RuntimeException ("Boot: module '{$name}' depends on unknown module '{$dep}'.");
                 }
                 $dependents[$dep][] = $name;
@@ -239,30 +266,37 @@ final class Boot
         }
 
         $ready = [];
-        foreach ($catalog as $name => $_) {
-            if ($indeg[$name] === 0) {
+        foreach ($catalog as $name => $_)
+        {
+            if ($indeg[$name] === 0)
+            {
                 $ready[] = $name;
             }
         }
 
         $order = [];
-        while ($ready !== []) {
+        while ($ready !== [])
+        {
             $name    = array_shift ($ready);
             $order[] = $name;
-            foreach ($dependents[$name] ?? [] as $child) {
-                if (--$indeg[$child] === 0) {
+            foreach ($dependents[$name] ?? [] as $child)
+            {
+                if (--$indeg[$child] === 0)
+                {
                     $ready[] = $child;
                 }
             }
         }
 
-        if (count ($order) !== count ($catalog)) {
+        if (count ($order) !== count ($catalog))
+        {
             $cyclic = array_values (array_diff (array_keys ($catalog), $order));
             throw new RuntimeException ('Boot: cyclic module dependency: ' . implode (', ', $cyclic));
         }
 
         $modules = [];
-        foreach ($order as $name) {
+        foreach ($order as $name)
+        {
             $class = $catalog[$name]['class'];
             $modules[$name] = new $class ();
         }
@@ -274,20 +308,25 @@ final class Boot
      */
     private static function moduleConfig (string $name): array
     {
-        $dir = self::modulesDir () . '/' . $name;
-        if (!is_dir ($dir)) {
-            throw new RuntimeException ("Boot: module '{$name}' not found at {$dir}.");
+        $module_dir = interlace (modules, $name);
+
+        if (!is_dir ($module_dir))
+        {
+            throw new RuntimeException ("Boot: module '{$name}' not found at {$module_dir}.");
         }
 
-        $manifest = $dir . '/Config/modules.php';
-        if (!is_file ($manifest)) {
+        $manifest = interlace ($module_dir, 'Config/modules.php');
+
+        if (!is_file ($manifest))
+        {
             throw new RuntimeException ("Boot: module '{$name}' missing Config/modules.php.");
         }
 
         $data  = require $manifest;
-        $class = $data['class'] ?? 'Modules\\' . $name . '\\' . $name . 'Module';
+        $class = namespacify ($data['class'] ?? interlace ('Modules', $name, "{$name}Module"));
 
-        if (!class_exists ($class)) {
+        if (!class_exists ($class))
+        {
             throw new RuntimeException ("Boot: module '{$name}' class '{$class}' not found.");
         }
 
@@ -301,10 +340,34 @@ final class Boot
     public static function registerAutoloader (): void
     {
         static $registered = false;
+
         if ($registered) {
             return;
         }
+
+        // CLI (bin/bone) memanggil registerAutoloader() tanpa init() —
+        // inisialisasi basepath di sini menjamin jalur autoload mana pun aman.
+        if (self::$basepath === '') {
+            self::$basepath = dirname(__DIR__, 2);
+        }
+        
+        require_once self::$basepath . '/.supports';
+
+        if (!defined ('sep'))
+        {
+            define ('basepath', self::$basepath);
+            define ('sep', DIRECTORY_SEPARATOR);
+
+            $index_file = self::$basepath . '/public/index.php';
+
+            foreach (read_directories ($index_file) as $type => $dir)
+            {
+                define ($type, interlace (basepath, $dir));
+            }
+        }
+
         $registered = true;
-        spl_autoload_register ([self::class, 'autoload']);
+        
+        spl_autoload_register ([self::class, 'runAutoloader']);
     }
 }

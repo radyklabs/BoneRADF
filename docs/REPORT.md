@@ -20,7 +20,7 @@ Project root is `app/` — all BoneRADF code and docs live there.
 | # | Work stream | Phase | Status | Notes |
 |---|---|---|---|---|
 | 1 | Docs scaffold | P0-docs | ✅ Done | PRD, ARCHITECTURE, SECURITY, API_GUIDE, DEPLOY, PLAN, CHANGELOG, REPORT, RULES, CONFIG, CONFIG.sample created |
-| Composition root | P0 | ✅ Done | `src/Kernel/Boot.php` = autoloader + discovery + module boot + route merge → `Kernel`. `public/index.php` 3 lines. `src/Manifest/{Routing,Modules}.php` + per-module `Config/{modules,routing}.php`. Typed segments `{id:int}`. Tests p0–p5 150/150, p6 16/16. `bone routes` / `bone modules` read the manifests. |
+| Composition root | P0 | ✅ Done | `src/Kernel/Boot.php` = autoloader + module discovery + module boot + route merge → `Kernel`. `public/index.php` 3 lines. `src/Manifest/Routing.php` + per-module `Config/{modules,routing}.php`. Typed segments `{id:int}`. Tests p0–p5 150/150, p6 16/16, p7 26/26, p8 9/9 (201/201). `bone routes` / `bone modules` read the manifests + scan `modules/`. |
 | 2 | Kernel | P0 | ✅ Done | Autoloader, Request, Response, Kernel, front controller. `tests/p0.php` 20/20 pass. Peak RSS 2.00 MB (target < 25 MB). 404 JSON via `php -S` verified. |
 | 3 | Routing + Middleware | P1 | ✅ Done | Router (`:param`, groups, enumeration), Pipeline (ordering, abort, error bubbling), Kernel wired (404/405/500 envelopes). `tests/p1.php` 20/20 pass. Dev server: `/health` → 200, `/hello` → 200, unknown → 404. |
 | 4 | Config + DI + Logging | P2 | ✅ Done | Typed Config (env > file > defaults, required keys, type coercion), light DI Container (explicit bindings, circular detection), FileLogger (JSON lines, secret redaction). `tests/p2.php` 27/27 pass. Dev server verified. |
@@ -29,11 +29,12 @@ Project root is `app/` — all BoneRADF code and docs live there.
 | 7 | Cache + Tests + CLI + Deploy | P5 | ✅ Done | Cache (MemoryDriver + FileDriver + Cache facade), micro test runner (assert_true/assert_eq/assert_null/assert_contains, non-zero exit), `bone` CLI (routes/modules/serve), Dockerfile. `tests/p5.php` 21/21 pass. `bone routes` and `bone modules` verified on CLI. |
 | 8 | v1.0.0 candidate | release | ✅ Done | All phases P0–P5 complete; 149 total tests pass across p0–p5. |
 | 9 | Sample login feature | post-v1 | ✅ Done | `AuthModule` (`modules/Auth/`) exposes `/api/auth/login` + `/api/auth/refresh` + global CORS, wired via composition root `public/index.php`; `modules/Auth/seed.php` creates `users` table + seed user `boneradf` in DB `local` (10028, root/root); `tests/p6.php` 16/16. Live HTTP: login 200 (CORS headers on allowed origin), wrong pass 401, empty 422, preflight 204, refresh 200, unknown origin → no CORS headers (fail-closed). |
-| 10 | Module system (§5) | post-v1 | ✅ Done | `src/Contracts/Module.php` interface (`boot(Container, Router, Pipeline)`) + module-aware autoloader (`Modules\<Name>\<Rest>` → `modules/<Name>/<Rest>.php` — nested dirs resolve, full-MVC layout; legacy `src/` retired). Composition root (`src/Kernel/Boot.php`) discovers modules from `src/Manifest/Modules.php` + per-module `Config/modules.php`, topo-sorted, fail-closed (no global registry — preserves §7 no-global-leakage). `AuthModule` is the first module. |
+| 10 | Module system (§5) | post-v1 | ✅ Done | `src/Contracts/Module.php` interface (`boot(Container, Router, Pipeline)`) + module-aware autoloader (`Modules\<Name>\<Rest>` → `modules/<Name>/<Rest>.php` — nested dirs resolve, full-MVC layout; legacy `src/` retired). Two-layer activation (amended 2026-11-17): system-level auto-discovery — `Boot` scans `modules/*/Config/modules.php` (central `src/Manifest/Modules.php` deleted, no core edits to add a module); activation is the module's own `Config/routing.php` — ≥1 route = active/booted, empty = inert (fail-closed). Topo-sorted, no global registry (§7). |
 | 11 | Resources module | post-v1 | ✅ Done | `ResourcesModule` (`modules/Resources/`) CRUD over `resources` table: GET/POST list+create, GET/PUT/DELETE by id, name validation (422 field errors), preflight OPTIONS. Seed 3 rows (Alpha, Beta, Gamma). Live CRUD: list 3 rows, create 201, update, delete 204, preflight 204 + CORS. |
 | 12 | System DB + full-MVC + AR Model | post-v1 | ✅ Done | `src/Database/Database.php` (`fromEnv()` — env read once, memoized shared PDO; removes duplicate per-request module connections + dead `instance('db')`), `src/Database/{Model,Relation}.php` (AR over QueryBuilder: chains + terminals, `hasOne`/`hasMany`/`belongsTo`/`belongsToMany`, eager `with()` bulk-IN N+1-guarded, rows stay arrays). Modules restructured to `Controllers/ + Models/ + Services/` (namespaces `Modules\<Name>\<Layer>`); SQL lives only in `Models/` (`UserModel::findByUsername`, `ResourceModel::listAll`); module `boot()` reads no `BONERADF_DB_*`. `tests/p7.php` 26/26; suite p0–p7 192/192. |
+| 13 | Module auto-discovery + routing-based activation | post-v1 | ✅ Done | `src/Manifest/Modules.php` deleted (central whitelist removed); `Boot` scans `modules/*/Config/modules.php` (discovery) and treats `Config/routing.php` as the activation switch (≥1 route = booted, empty = inert). `bin/bone modules` shows active/inactive status. `tests/p8.php` 9/9; suite p0–p8 201/201. |
 
-Overall: P0–P5 complete; v1.0.0 candidate. M1–M3 gates met. Post-v1 module system (P6) + Auth + Resources modules done; system-level DB factory + full-MVC layout + in-tree AR Model (P8) done — suite p0–p7 192/192.
+Overall: P0–P5 complete; v1.0.0 candidate. M1–M3 gates met. Post-v1 module system (P6) + Auth + Resources modules done; system-level DB factory + full-MVC layout + in-tree AR Model (P8) done; module auto-discovery + routing-based activation (P9) done — suite p0–p8 201/201.
 
 ## Findings
 
@@ -86,13 +87,14 @@ and `logs/` at repo root remain out-of-scope.
 | 18 | Custom commands: >branch, >push, >sync, >track, >audit, >release | 2026-11-14 | ✅ |
 | 19 | RULES.md + CONFIG.md pattern (radykfw-style) | 2026-11-14 | ✅ |
 | 20 | In-tree AR Model over QueryBuilder (ar-arrays + eager relations; no external ORM package, no raw-SQL API) — user-approved scope amendment to #5, together with full-MVC module layout (`Controllers/Models/Services`) and system-level `Database::fromEnv()` | 2026-11-17 | ✅ |
+| 21 | Module auto-discovery + routing-based activation — `src/Manifest/Modules.php` deleted; `Boot` scans `modules/*/Config/modules.php` (known) and treats `Config/routing.php` (≥1 route) as the activation switch; inactive modules never boot; add-module needs zero core edits | 2026-11-17 | ✅ |
 
 ## Doc sync checklist
 
-1. PLAN reflects current REPORT status — verified 2026-11-17 (P0–P5 ✅; post-v1 P6.0–P6.5, P7.0–P7.3, P8.0–P8.4 ✅).
+1. PLAN reflects current REPORT status — verified 2026-11-17 (P0–P5 ✅; post-v1 P6.0–P6.5, P7.0–P7.3, P8.0–P8.4, P9.0–P9.2 ✅).
 2. PRD reflects implemented vs planned — verified 2026-11-17 (§2 ORM non-goal amended: no external ORM package; in-tree AR over the builder; module system implemented).
-3. REPORT matches actual code state — verified 2026-11-17 (192 tests total: p0–p5 150 + p6 16 + p7 26; `src/Database/{Database,Model,Relation}.php`, `modules/Auth/{AuthModule,Controllers,Models,Services,seed}`, `modules/Resources/{ResourcesModule,Controllers,Models,Services,seed}`, `tests/p7.php` present; no PHP files under `modules/*/src/` remain).
-4. CHANGELOG includes all committed changes — verified 2026-11-17 (`[Unreleased]` covers system DB factory, AR layer + relations, full-MVC sweep, connection-dedupe fix).
+3. REPORT matches actual code state — verified 2026-11-17 (201 tests total: p0–p5 150 + p6 16 + p7 26 + p8 9; `src/Manifest/Modules.php` deleted; module auto-discovery + routing-based activation in `Boot`; `tests/p8.php` present; no PHP files under `modules/*/src/` remain).
+4. CHANGELOG includes all committed changes — verified 2026-11-17 (`[Unreleased]` covers system DB factory, AR layer + relations, full-MVC sweep, connection-dedupe fix, module auto-discovery + activation switch).
 
 ## Next actions
 
@@ -107,4 +109,4 @@ and `logs/` at repo root remain out-of-scope.
 
 ---
 
-**Last synced: 2026-11-16 — P0–P5 complete; 149/149 tests pass, 2.00 MB peak RSS. Post-v1: module system (§5) + Auth module implemented — 16/16 p6 tests, live HTTP verified, DB `local` seeded with `users` table, `public/index.php` now a pure composition root.**
+**Last synced: 2026-11-17 — P0–P5 complete; 2.00 MB peak RSS. Post-v1: module system (§5) + Auth + Resources + AR Model + full-MVC layout + module auto-discovery/routing-based activation — suite p0–p8 201/201.**

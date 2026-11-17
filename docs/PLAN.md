@@ -22,9 +22,10 @@ where noted as actual docs.
 - Project skeleton layout establishing the "common structure" — D4
 
 **Actual (2026-11-17)**: autoloader + composition root consolidated in
-`src/Kernel/Boot.php` (`Boot::init()` → `Kernel`); `src/Manifest/` holds the
-system route aliases + active-module list; each module declares
-`Config/{modules,routing}.php`. `public/index.php` is 3 lines.
+`src/Kernel/Boot.php` (`Boot::init()` → `Kernel`); `src/Manifest/Routing.php`
+holds the system route aliases; modules auto-discovered from
+`modules/<Name>/Config/modules.php`, activated by their own
+`Config/routing.php`. `public/index.php` is 3 lines.
 
 **Verification check**: One route served via `php -S` (built-in server)
 returning a JSON body; boots with no `vendor/` directory present.
@@ -149,7 +150,7 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 | — | **P5 — Cache + test runner + CLI + deploy** | **P5** | 🔵 Info |
 | P5.1 | Cache (file driver scope TBD) + TTL test | P5 | ✅ Done |
 | P5.2 | Micro test runner (non-zero exit on failure) — D7 | P5 | ✅ Done |
-| P5.3 | `bone` CLI: route list, module list, serve — D8 | P5 | ✅ Done |
+| P5.3 | `bone` CLI: route list, module list (scans `modules/`, shows active/inactive), serve — D8 | P5 | ✅ Done |
 | P5.4 | Dockerfile / PHP-FPM deploy recipe + verification | P5 | ✅ Done |
 | — | **Post-v1 sample: login feature (end-to-end)** | **post-v1** | 🔵 Info |
 | P6.0 | Sample DB: `modules/Auth/seed.php` idempotent — `users` table + seed user in DB `local` | post-v1 | ✅ Done |
@@ -168,6 +169,10 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 | P8.2 | Full-MVC sweep — `modules/<Name>/{Controllers,Models,Services}/` + namespaces `Modules\<Name>\<Layer>`; routing manifests + wiring updated; `src/` concept retired per module | post-v1 | ✅ Done |
 | P8.3 | Query extraction — `UserModel::findByUsername`, `ResourceModel::listAll`; services/controllers hold zero SQL; module `boot()` reads no `BONERADF_DB_*` | post-v1 | ✅ Done |
 | P8.4 | `tests/p7.php` — 26/26 (factory memoize, CRUD + chain reset, 4 relation types, N+1 guard, fail-loud); suite p0–p7 192/192 | post-v1 | ✅ Done |
+| — | **Post-v1: module auto-discovery + routing-based activation** (user-approved 2026-11-17) | **post-v1** | 🔵 Info |
+| P9.0 | `src/Manifest/Modules.php` deleted; `Boot` scans `modules/*/Config/modules.php` — adding a module needs zero core edits | post-v1 | ✅ Done |
+| P9.1 | Activation switch: `Config/routing.php` ≥1 route = active/booted; empty = inert (fail-closed). `bin/bone modules` shows active/inactive + route count | post-v1 | ✅ Done |
+| P9.2 | `tests/p8.php` — 9/9 (discovery, active boot, inert no-boot, route-count activation, `bone modules` output); suite p0–p8 201/201 | post-v1 | ✅ Done |
 
 ---
 
@@ -187,4 +192,4 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 - New file paths in `src/` are planned until created; do not cite them as existing.
 - Scope changes mid-phase: accept / defer / reject explicitly — never silently absorb.
 
-Last synced: 2026-11-17 — P0–P5 complete; M1–M3 gates met; v1.0.0 candidate. Post-v1: module system (§5) + Auth (P6.0–P6.5) + Resources (P7.0–P7.3) done. New: system-level `Database::fromEnv()` + in-tree AR Model (relations, eager) + full-MVC module layout (P8.0–P8.4) ✅ — suite p0–p7 192/192 (p7 26/26).
+Last synced: 2026-11-17 — P0–P5 complete; M1–M3 gates met; v1.0.0 candidate. Post-v1: module system (§5) + Auth (P6.0–P6.5) + Resources (P7.0–P7.3) done. New: system-level `Database::fromEnv()` + in-tree AR Model + full-MVC layout (P8.0–P8.4) + module auto-discovery & routing-based activation (P9.0–P9.2) ✅ — suite p0–p8 201/201 (p8 9/9).

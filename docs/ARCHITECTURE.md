@@ -105,15 +105,14 @@ modules/
 
 Autoloading: `Boot::autoload()` maps `Modules\<Name>\<Rest>` →
 `modules/<Name>/<Rest>.php` (nested dirs included — full-MVC layout; the
-legacy `modules/<Name>/src/` concept is retired). No Composer, no
-auto-discovery.
+legacy `modules/<Name>/src/` concept is retired). No Composer.
 
 Framework-side layout conventions:
 
 ```
 src/Contracts/     interfaces + traits (Module, Middleware, Logger, CacheDriver)
 src/Controller/    core controllers (DefaultController)
-src/Manifest/      data-only manifests (Routing aliases, active module list)
+src/Manifest/      data-only manifests (system route aliases)
 ```
 
 Minimal contract (implemented):
@@ -153,12 +152,19 @@ CSRF, Auth JWT+cookie, RBAC, RateLimit) ship as modules and are ON by default
 — they follow the same contract; they are simply pre-registered by the Kernel.
 
 **Composition root** (`src/Kernel/Boot.php`) is the single place modules are
-discovered, instantiated, and booted. Activation is explicit: a module must
-appear in `src/Manifest/Modules.php` *and* declare `Config/modules.php` —
-otherwise it is inert (fail-closed). Boot order is topological over each
-manifest's `depends_on`; cycles, unknown dependencies, missing classes, and
-duplicate route aliases all fail boot. This preserves §7's "no `global()`
-leakage" rule. `public/index.php` stays the front controller and only calls
+discovered, resolved, and booted. Two layers:
+
+- **Auto-discovery (system)**: every `modules/<Name>/Config/modules.php`
+  makes the module *known* — no central registry, adding a module requires
+  zero core edits. The autoloader resolves `Modules\*` classes on demand.
+- **Activation (explicit, by the module itself)**: a discovered module is
+  booted only when its `Config/routing.php` declares ≥1 route; an empty file
+  keeps it inert (fail-closed). Boot order is topological over each
+  manifest's `depends_on`; cycles, unknown/inactive dependencies, missing
+  classes, and duplicate route aliases all fail boot.
+
+This preserves §7's "no `global()` leakage" rule. `public/index.php` stays
+the front controller and only calls
 `Boot::init()->handle(Request::fromGlobals())->emit()`.
 
 The first module is `modules/Auth/` (login + refresh + CORS + `users` seed).
@@ -299,4 +305,4 @@ The container is the single composition root: extending the framework = binding 
 
 ---
 
-Last synced: 2026-11-17 — §5 full-MVC module layout (Controllers/Models/Services), system-level `Database::fromEnv()`, in-tree AR `Model` with eager relations; suite p0–p7 192/192; project root at `app/`.
+Last synced: 2026-11-17 — §5 auto-discovery + activation-via-routing (no central module registry; `routing.php` is the module's activation switch); suite p0–p8 201/201; project root at `app/`.

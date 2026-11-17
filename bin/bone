@@ -73,20 +73,32 @@ function cmdModules(): void
 {
     \Boneradf\Kernel\Boot::registerAutoloader();
 
-    $list = \Boneradf\Manifest\Modules::list();
-    if ($list === []) {
-        echo "No modules active.\n";
+    $root = dirname(__DIR__) . '/modules';
+    $entries = is_dir($root) ? scandir($root) : false;
+    $names = [];
+    if ($entries !== false) {
+        foreach ($entries as $entry) {
+            if ($entry === '.' || $entry === '..') { continue; }
+            if (is_file("{$root}/{$entry}/Config/modules.php")) { $names[] = $entry; }
+        }
+    }
+    sort($names);
+
+    if ($names === []) {
+        echo "No modules found.\n";
         return;
     }
 
-    printf("%-20s %-10s %s\n", 'MODULE', 'ROUTES', 'CLASS');
-    printf("%-20s %-10s %s\n", '------', '------', '-----');
-    foreach ($list as $name) {
-        $file = dirname(__DIR__) . '/modules/' . $name . '/Config/modules.php';
-        $data = is_file($file) ? require $file : [];
-        printf("%-20s %-10s %s\n",
+    printf("%-20s %-10s %-7s %s\n", 'MODULE', 'STATUS', 'ROUTES', 'CLASS');
+    printf("%-20s %-10s %-7s %s\n", '------', '------', '------', '-----');
+    foreach ($names as $name) {
+        $data = require "{$root}/{$name}/Config/modules.php";
+        $routing = "{$root}/{$name}/Config/routing.php";
+        $routes = is_file($routing) ? require $routing : [];
+        printf("%-20s %-10s %-7d %s\n",
             $name,
-            !empty($data['routes']) ? 'on' : 'off',
+            $routes === [] ? 'inactive' : 'active',
+            is_array($routes) ? count($routes) : 0,
             $data['class'] ?? '-'
         );
     }

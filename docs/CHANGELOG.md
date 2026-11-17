@@ -38,16 +38,19 @@ Versions follow [Semantic Versioning](https://semver.org/).
   `bin/bone`. `public/index.php` is now 3 lines (require → `init()` →
   `handle()` → `emit()`). `public/test.php` (gitignored scratch) drives the
   same chain through `.config` / `.supports` for bootstrap testing.
-- **`src/Manifest/{Routing,Modules}.php`**: system-level default route
-  aliases (`GET /`, `GET /health`) and the active-module list — the single
-  gate for module activation. Growth is +1 line per module.
-- **Module manifests + declarative routes**: each active module declares
+- **`src/Manifest/{Routing}.php`**: system-level default route
+  aliases (`GET /`, `GET /health`). Modules are auto-discovered from
+  `modules/<Name>/Config/modules.php` (no central list — growth is a folder
+  per module, zero core edits); activation is the module's own
+  `Config/routing.php` (≥1 route = booted, empty = inert).
+- **Module manifests + declarative routes**: each module declares
   `modules/<Name>/Config/modules.php` (class, `depends_on`) and
   `modules/<Name>/Config/routing.php` (`'METHOD /path/{param:type}' =>
-  [Controller::class, 'method']`). `Boot` topologically sorts by
-  `depends_on` (fail-closed on cycle / unknown dep / missing class), and
-  fails boot on duplicate aliases across system + module sources. Handlers
-  resolve from the container when bound, else `new`.
+  [Controller::class, 'method']`). `Boot` scans `modules/`, filters to
+  active modules (non-empty `routing.php`), topologically sorts by
+  `depends_on` (fail-closed on cycle / unknown or inactive dep / missing
+  class), and fails boot on duplicate aliases across system + module
+  sources. Handlers resolve from the container when bound, else `new`.
 - **Typed route segments** (`{id:int}` / `{id:num}` / `{id:slug}` /
   `{id:uuid}` / `{id:any}` / custom `{id:/regex/}`) in `Route::match()`;
   legacy `:param` still matched as untyped. `/api/resources/{id:int}` now
@@ -88,12 +91,21 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - **`tests/p7.php`** — 26/26: factory memoization, CRUD chains + terminal
   state reset, all four relation types (eager arrays, orphan → null, pivot
   belongsToMany), prepare-count N+1 guard, fail-loud unknown relation.
-- **Docs sync for the P8 batch**: `ARCHITECTURE.md` §5 (full-MVC layout,
-  autoloader mapping, system-level `Database::fromEnv()`), `PLAN.md`
-  (P8.0–P8.4 rows), `PRD.md` §2 (ORM non-goal amended: no external ORM
-  package; in-tree AR over the builder), `REPORT.md` (row 12, decision 20,
-  checklist re-verified 2026-11-17), `RULES.md` (module layout rule),
-  `CLAUDE.md` (directory layout).
+- **Module auto-discovery + routing-based activation**: `src/Manifest/Modules.php`
+  deleted (no central module whitelist). `Boot` scans
+  `modules/*/Config/modules.php` — a module is *known* from its folder alone,
+  adding a module requires zero core edits. Activation is explicit and
+  module-owned: `Config/routing.php` with ≥1 route = active (routes merged +
+  `boot()` called); empty array = inert (never booted, fail-closed). A module
+  `depends_on` an inactive module → boot fails. `bin/bone modules` scans
+  `modules/` and prints active/inactive + route count.
+- **`tests/p8.php`** — 9/9: discovery of both modules, Auth + Resources
+  active with their route counts, inert empty-`routing.php` module discovered
+  but not booted, `bone modules` status/count output; full suite p0–p8 201/201.
+- **Docs sync for the P9 batch**: `ARCHITECTURE.md` §5 (two-layer activation
+  wording, autoloader mapping), `PLAN.md` (P9.0–P9.2 rows), `REPORT.md`
+  (row 13, decision 21, checklist re-verified 2026-11-17), `CLAUDE.md`
+  (directory layout).
 
 ### Changed
 
@@ -119,8 +131,8 @@ Versions follow [Semantic Versioning](https://semver.org/).
   (`Routing.php`, `Modules.php`); handlers live in `src/Controller/`.
 - **`bin/bone routes`** lists the real merged route table via
   `Boot::routes()` (columns: METHOD / PATTERN / ALIAS); **`bin/bone modules`**
-  reads `src/Manifest/Modules.php` + each module's manifest instead of a
-  hardcoded security-module list.
+  scans `modules/*/Config/{modules,routing}.php` and prints
+  active/inactive + route count instead of a central manifest.
 - Route handlers are `[Controller::class, 'method']` (array callable) instead
   of closures; `Route` now carries the source alias as its name.
 - Entry points (`bin/bone`, `tests/p0–p6`, `modules/*/seed.php`) require
@@ -143,6 +155,9 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ### Removed
 
+- `src/Manifest/Modules.php` — the central active-module whitelist. Modules
+  are now auto-discovered from `modules/*/Config/modules.php`; activation is
+  each module's own `Config/routing.php` (see Added).
 - `src/Kernel/autoload.php` — replaced by `Boot::autoload()` (one source of
   truth, class-based). All 11 entry points updated in the same change.
 

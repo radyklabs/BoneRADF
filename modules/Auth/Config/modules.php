@@ -1,15 +1,17 @@
 <?php declare (strict_types=1);
 
 /**
- * Auth module manifest.
+ * Auth module manifest — declares the module class + dependencies.
  *
- * Discovered by Boot::activeModules() from src/Manifest/Modules.php.
- * `depends_on` is ordered topologically; cycles fail closed.
+ * Auto-discovered by Boot::activeModules() from the module's
+ * Config/modules.php manifest.
  *
- * @return array{class: class-string, depends_on: list<string>, routes: bool}
+ * Activation is separate: Config/routing.php must declare one or more
+ * routes, or the module stays inert (never booted).
+ *
+ * @return array{class: class-string, depends_on: list<string>}
  */
 return [
     'class'      => 'Modules\\Auth\\AuthModule',
     'depends_on' => [],
-    'routes'     => true,
 ];
