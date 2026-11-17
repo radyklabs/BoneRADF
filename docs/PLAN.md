@@ -173,6 +173,9 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 | P9.0 | `src/Manifest/Modules.php` deleted; `Boot` scans `modules/*/Config/modules.php` — adding a module needs zero core edits | post-v1 | ✅ Done |
 | P9.1 | Activation switch: `Config/routing.php` ≥1 route = active/booted; empty = inert (fail-closed). `bin/bone modules` shows active/inactive + route count | post-v1 | ✅ Done |
 | P9.2 | `tests/p8.php` — 9/9 (discovery, active boot, inert no-boot, route-count activation, `bone modules` output); suite p0–p8 201/201 | post-v1 | ✅ Done |
+| — | **Post-v1: HTML view responses (public landing)** (user-approved 2026-11-17) | **post-v1** | 🔵 Info |
+| P9.3 | `Response::html()` + `Response::view()` — opt-in text/html responses; views under `src/Views/` (traversal-guarded name); `src/Views/landing.php` sample; D2 amended | post-v1 | ✅ Done |
+| P9.4 | `tests/p0.php` +6 (html pass-through, view render, traversal reject, missing view); suite p0–p8 207/207 | post-v1 | ✅ Done |
 
 ---
 
@@ -192,4 +195,4 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 - New file paths in `src/` are planned until created; do not cite them as existing.
 - Scope changes mid-phase: accept / defer / reject explicitly — never silently absorb.
 
-Last synced: 2026-11-17 — P0–P5 complete; M1–M3 gates met; v1.0.0 candidate. Post-v1: module system (§5) + Auth (P6.0–P6.5) + Resources (P7.0–P7.3) done. New: system-level `Database::fromEnv()` + in-tree AR Model + full-MVC layout (P8.0–P8.4) + module auto-discovery & routing-based activation (P9.0–P9.2) ✅ — suite p0–p8 201/201 (p8 9/9).
+Last synced: 2026-11-17 — P0–P5 complete; M1–M3 gates met; v1.0.0 candidate. Post-v1: module system (§5) + Auth (P6.0–P6.5) + Resources (P7.0–P7.3) done. New: system-level `Database::fromEnv()` + in-tree AR Model + full-MVC layout (P8.0–P8.4) + module auto-discovery & routing-based activation (P9.0–P9.2) + HTML view responses for public landing (P9.3–P9.4) ✅ — suite p0–p8 207/207.

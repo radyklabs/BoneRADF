@@ -106,6 +106,14 @@ Versions follow [Semantic Versioning](https://semver.org/).
   wording, autoloader mapping), `PLAN.md` (P9.0–P9.2 rows), `REPORT.md`
   (row 13, decision 21, checklist re-verified 2026-11-17), `CLAUDE.md`
   (directory layout).
+- **HTML view responses (public landing)**: `Response::html(string)` +
+  `Response::view(name)` — opt-in `text/html` responses; views live in
+  `src/Views/<name>.php` (zero data, plain output; path traversal
+  guarded by a name pattern check). Amandemen scope D2 ("no views/HTML"):
+  headless default preserved — view rendering is opt-in per route, JSON
+  remains the default envelope. Sample view `src/Views/landing.php`.
+  `tests/p0.php` +6 (html pass-through, view render, traversal reject,
+  missing view); suite p0–p8 207/207.
 
 ### Changed
 

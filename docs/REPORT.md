@@ -33,8 +33,9 @@ Project root is `app/` — all BoneRADF code and docs live there.
 | 11 | Resources module | post-v1 | ✅ Done | `ResourcesModule` (`modules/Resources/`) CRUD over `resources` table: GET/POST list+create, GET/PUT/DELETE by id, name validation (422 field errors), preflight OPTIONS. Seed 3 rows (Alpha, Beta, Gamma). Live CRUD: list 3 rows, create 201, update, delete 204, preflight 204 + CORS. |
 | 12 | System DB + full-MVC + AR Model | post-v1 | ✅ Done | `src/Database/Database.php` (`fromEnv()` — env read once, memoized shared PDO; removes duplicate per-request module connections + dead `instance('db')`), `src/Database/{Model,Relation}.php` (AR over QueryBuilder: chains + terminals, `hasOne`/`hasMany`/`belongsTo`/`belongsToMany`, eager `with()` bulk-IN N+1-guarded, rows stay arrays). Modules restructured to `Controllers/ + Models/ + Services/` (namespaces `Modules\<Name>\<Layer>`); SQL lives only in `Models/` (`UserModel::findByUsername`, `ResourceModel::listAll`); module `boot()` reads no `BONERADF_DB_*`. `tests/p7.php` 26/26; suite p0–p7 192/192. |
 | 13 | Module auto-discovery + routing-based activation | post-v1 | ✅ Done | `src/Manifest/Modules.php` deleted (central whitelist removed); `Boot` scans `modules/*/Config/modules.php` (discovery) and treats `Config/routing.php` as the activation switch (≥1 route = booted, empty = inert). `bin/bone modules` shows active/inactive status. `tests/p8.php` 9/9; suite p0–p8 201/201. |
+| 14 | HTML view responses (public landing) | post-v1 | ✅ Done | `Response::html()` + `Response::view()` — opt-in `text/html` responses; views under `src/Views/` (name pattern guards traversal); headless default preserved (JSON envelope unchanged). `src/Views/landing.php` sample. p0 +6; suite p0–p8 207/207. |
 
-Overall: P0–P5 complete; v1.0.0 candidate. M1–M3 gates met. Post-v1 module system (P6) + Auth + Resources modules done; system-level DB factory + full-MVC layout + in-tree AR Model (P8) done; module auto-discovery + routing-based activation (P9) done — suite p0–p8 201/201.
+Overall: P0–P5 complete; v1.0.0 candidate. M1–M3 gates met. Post-v1 module system (P6) + Auth + Resources modules done; system-level DB factory + full-MVC layout + in-tree AR Model (P8) done; module auto-discovery + routing-based activation (P9.0–P9.2) + HTML view responses for public landing (P9.3–P9.4) done — suite p0–p8 207/207.
 
 ## Findings
 
@@ -88,13 +89,14 @@ and `logs/` at repo root remain out-of-scope.
 | 19 | RULES.md + CONFIG.md pattern (radykfw-style) | 2026-11-14 | ✅ |
 | 20 | In-tree AR Model over QueryBuilder (ar-arrays + eager relations; no external ORM package, no raw-SQL API) — user-approved scope amendment to #5, together with full-MVC module layout (`Controllers/Models/Services`) and system-level `Database::fromEnv()` | 2026-11-17 | ✅ |
 | 21 | Module auto-discovery + routing-based activation — `src/Manifest/Modules.php` deleted; `Boot` scans `modules/*/Config/modules.php` (known) and treats `Config/routing.php` (≥1 route) as the activation switch; inactive modules never boot; add-module needs zero core edits | 2026-11-17 | ✅ |
+| 22 | HTML view responses (public landing) — opt-in `Response::html()` / `Response::view()` with views under `src/Views/`; D2 "no views/HTML" amended: headless default preserved, view rendering is a per-route opt-in, not framework-wide | 2026-11-17 | ✅ |
 
 ## Doc sync checklist
 
 1. PLAN reflects current REPORT status — verified 2026-11-17 (P0–P5 ✅; post-v1 P6.0–P6.5, P7.0–P7.3, P8.0–P8.4, P9.0–P9.2 ✅).
 2. PRD reflects implemented vs planned — verified 2026-11-17 (§2 ORM non-goal amended: no external ORM package; in-tree AR over the builder; module system implemented).
-3. REPORT matches actual code state — verified 2026-11-17 (201 tests total: p0–p5 150 + p6 16 + p7 26 + p8 9; `src/Manifest/Modules.php` deleted; module auto-discovery + routing-based activation in `Boot`; `tests/p8.php` present; no PHP files under `modules/*/src/` remain).
-4. CHANGELOG includes all committed changes — verified 2026-11-17 (`[Unreleased]` covers system DB factory, AR layer + relations, full-MVC sweep, connection-dedupe fix, module auto-discovery + activation switch).
+3. REPORT matches actual code state — verified 2026-11-17 (207 tests total: p0–p5 156 + p6 16 + p7 26 + p8 9; `src/Manifest/Modules.php` deleted; module auto-discovery + routing-based activation in `Boot`; `Response::html()`/`Response::view()` + `src/Views/` present; no PHP files under `modules/*/src/` remain).
+4. CHANGELOG includes all committed changes — verified 2026-11-17 (`[Unreleased]` covers system DB factory, AR layer + relations, full-MVC sweep, connection-dedupe fix, module auto-discovery + activation switch, HTML view responses).
 
 ## Next actions
 

@@ -64,6 +64,31 @@ $noContent = Response::noContent();
 check('no-content status', $noContent->status() === 204);
 check('no-content json is null', $noContent->toJson() === 'null');
 
+// --- Response: HTML view responses (public landing) ---
+$html = Response::html('<h1>x</h1>', 200);
+check('html response body passes through', $html->toJson() === '<h1>x</h1>');
+check('html response content type', $html->contentType() === 'text/html; charset=utf-8');
+
+$landing = Response::view('landing');
+check('view: renders sample landing view', str_contains($landing->toJson(), 'BoneRADF'));
+check('view: content type html', $landing->contentType() === 'text/html; charset=utf-8');
+
+$bad = null;
+try {
+    Response::view('../x');
+} catch (RuntimeException $e) {
+    $bad = $e;
+}
+check('view: traversal name rejected', $bad !== null);
+
+$missing = null;
+try {
+    Response::view('does-not-exist');
+} catch (RuntimeException $e) {
+    $missing = $e;
+}
+check('view: missing view file throws', $missing !== null);
+
 // --- Kernel ---
 $kernel = new Kernel();
 $resp = $kernel->handle(new Request('GET', '/anything'));

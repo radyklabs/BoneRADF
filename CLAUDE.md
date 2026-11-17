@@ -74,6 +74,7 @@ src/                      — PSR-4 root for Boneradf\ (core framework)
   Contracts/              — interfaces + traits (Module, Middleware, Logger, CacheDriver)
   Controller/             — core controllers (DefaultController)
   Manifest/               — data-only manifests (system route aliases)
+  Views/                  — opt-in HTML view files (public landing, Response::view)
 modules/                  — development layer (PSR-4, namespace Modules\<Name>\)
   Auth/                   — first module: login + refresh + CORS + users seed
     AuthModule.php        — module bootstrap class (implements Boneradf\Contracts\Module)
@@ -82,6 +83,7 @@ modules/                  — development layer (PSR-4, namespace Modules\<Name>
     Services/             — business logic, zero SQL (namespace \Services)
     seed.php              — idempotent `users` table + sample user bootstrap
 tests/                    — micro test suite p0–p8
+```
 ```
 
 ## Docs Sync Rule

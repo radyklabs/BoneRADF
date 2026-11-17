@@ -35,7 +35,7 @@ lightweight.
 |---|----------|-----------|
 | D1 | Name/namespace `BoneRADF`, PSR-4 root namespace `Boneradf\` | Locked by user |
 | D2 | Zero-dependency modularity; **no composer runtime requirement**; custom PSR-4 autoloader + built-in module registry; copy-folder deploy. `composer.json` may exist later **only** as a dev-time convenience | Easy deploy, lightweight, no runtime deps |
-| D3 | Runtime shape: JSON/REST API only. No views, no HTML rendering. Router + middleware pipeline + light DI + PSR-15-style request/response | Headless; keeps core nano |
+| D3 | Runtime shape: JSON/REST API only. No views, no HTML rendering. Router + middleware pipeline + light DI + PSR-15-style request/response | Headless; keeps core nano | *(amended 2026-11-17, decision #22: opt-in HTML view responses for public landing via `Response::view()`; headless default preserved)* |
 | D4 | Deploy model: one framework install per microservice; multiple services = multiple small projects sharing the same structure ("common structure") | Familiar, light maintain |
 | D5 | Security: core minimal + installable security modules; core enforces at minimum PDO prepared-statement-only query builder (no raw query API in core), strict input validation, security headers (CSP/HSTS/X-Frame-Options/X-Content-Type-Options/Referrer-Policy), signed cookies; plus CSRF, rate-limit, auth (JWT + session), RBAC modules. Secure behaviors ON, not opt-in | Super secure, injection-hack-free |
 | D6 | DB layer: built-in PDO query builder, prepared statements enforced; MySQL/MariaDB/SQLite/Postgres via DSN; **no raw-escape-hatch in core** | Injection-hack-free |
@@ -51,7 +51,10 @@ lightweight.
 Explicitly out of scope for v1.0:
 
 - **No full CMS** — no content modeling, admin UI, or page tree.
-- **No views / HTML rendering** — JSON responses only (D3).
+- **No views / HTML rendering by default** — JSON responses only (D3,
+  amended 2026-11-17: opt-in `Response::view()` for public landing pages;
+  view files live under `src/Views/`, rendering is per-route, never
+  framework-wide).
 - **No worker / queue / job system** — no background workers, no SSE (D8).
 - **No multi-tenant SaaS platform** — one install serves one microservice (D4).
 - **No composer required at runtime** — copy-folder deploy; composer.json is
@@ -222,7 +225,7 @@ without extra wiring.
 | Threat | Control (default ON) |
 |--------|----------------------|
 | SQL injection | PDO prepared-statement-only query builder; **no raw query API in core** (D5, D6) |
-| XSS | JSON-only responses (D3) — no HTML output, therefore no output-escaping layer required in core; consumers must handle their own rendering escaping |
+| XSS | JSON-only responses by default (D3) — no HTML output in the envelope, so no output-escaping layer required in core; consumers must handle their own rendering escaping. Opt-in `Response::view()` HTML (public landing, D3 amendment 2026-11-17) is raw template output — view authors are responsible for escaping user data; views take zero data in v1 |
 | CSRF | Signed CSRF token module for state-changing requests (D5) |
 | Brute force / abuse | Rate-limit module, enabled by default (D5) |
 | Transport / clickjacking / MIME sniffing / referrer leaks | Security headers: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy — emitted by default (D5) |

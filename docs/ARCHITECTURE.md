@@ -113,6 +113,7 @@ Framework-side layout conventions:
 src/Contracts/     interfaces + traits (Module, Middleware, Logger, CacheDriver)
 src/Controller/    core controllers (DefaultController)
 src/Manifest/      data-only manifests (system route aliases)
+src/Views/         opt-in HTML view files (public landing; Response::view)
 ```
 
 Minimal contract (implemented):
@@ -305,4 +306,4 @@ The container is the single composition root: extending the framework = binding 
 
 ---
 
-Last synced: 2026-11-17 — §5 auto-discovery + activation-via-routing (no central module registry; `routing.php` is the module's activation switch); suite p0–p8 201/201; project root at `app/`.
+Last synced: 2026-11-17 — §5 auto-discovery + activation-via-routing (no central module registry; `routing.php` is the module's activation switch); opt-in HTML view responses (`Response::view`, `src/Views/`) for public landing; suite p0–p8 207/207; project root at `app/`.
