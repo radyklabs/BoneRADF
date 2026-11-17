@@ -36,7 +36,7 @@ final class AuthModule implements Module
     public function boot(Container $container, Router $router, Pipeline $pipeline): void
     {
         $config = Config::loadSystem ();
-        $secret = $config->get ('boneradf.app_key');
+        $secret = $config->get ('app.key');
 
         $auth = new AuthGuard($secret, 3600, 604800);
         $container->instance('auth.guard', $auth);
@@ -64,7 +64,7 @@ final class AuthModule implements Module
             'http://localhost',
             'http://127.0.0.1',
         ];
-        $env = $config->getOr ('boneradf.cors', '');
+        $env = $config->getOr ('cors.origins', '');
         if ($env !== false && $env !== '')
         {
             return array_values(array_filter(array_map('trim', explode(',', $env))));

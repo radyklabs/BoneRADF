@@ -37,6 +37,8 @@ final class Boot
         
         self::$initialized = true;
 
+        // DB-availability + Config readiness (reads `.env` directly via
+        // Config::parseDotEnv + realEnv; no separate .env loader needed).
         self::registerAutoloader ();
 
         // Fail-closed boot check (skipped when module boot is off — the
@@ -246,13 +248,23 @@ final class Boot
             return; // no active modules → no DB needed → nothing to check.
         }
 
-        $dsn = getenv ('BONERADF_DB_DSN');
-        if ($dsn === false || $dsn === '')
+        // Fail-closed: the selected named connection must be declared with a
+        // non-empty database name. (We don't connect here — cheap check only.)
+        try {
+            $config = \Boneradf\Config\Config::loadSystem ();
+            $name   = $config->connectionName ();
+            $db     = $config->getOr ("database.{$name}.name", '');
+        } catch (\RuntimeException $e) {
+            throw new RuntimeException (
+                'Boot: active modules [' . implode (', ', $active) .
+                '] require a database, but ' . $e->getMessage ()
+            );
+        }
+        if ($db === '')
         {
             throw new RuntimeException (
                 'Boot: active modules [' . implode (', ', $active) .
-                '] require a database, but BONERADF_DB_DSN is not set. ' .
-                'Provide it in the environment (or a Config).'
+                "] require a database, but 'database.{$name}.name' is empty."
             );
         }
     }

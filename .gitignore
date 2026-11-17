@@ -1,6 +1,7 @@
 # LocalWP
 .envrc
 /sql
+/.env
 
 /docs/CONFIG.md
 

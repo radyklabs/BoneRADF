@@ -131,8 +131,27 @@ Versions follow [Semantic Versioning](https://semver.org/).
   fail-closed, DB-availability activation, `find()` queue-respecting, route
   metachar escape, pipeline-per-request, RBAC wiring semantics, minor
   cleanup; see `PLAN-P9.5.md` + `REVIEW-2026-11-17-v2.md`.
+- **Dot-notated `.env` + named DB connections** (user-approved 2026-11-18):
+  flat `key=value` file with dot keys — `app.key`,
+  `database.<name>.{driver,host,port,name,charset,user,pass}` (ships
+  `default` + `test`), `database.env` runtime selector. `Config::loadSystem()`
+  parses the file directly; real env (`BONERADF_DB_ENV`,
+  `DATABASE_<NAME>_*`, `APP_KEY`, …) always wins. Adding a connection = a
+  `.env` block, zero code change. `.env` gitignored; `.env.sample` tracked.
+- **Live smoke verified 2026-11-18**: `GET /` 200 (landing HTML),
+  `GET /health` 200 JSON, `POST /api/auth/login` 200 (JWT issued);
+  suite p0–p8 212/212.
 
 ### Changed
+
+- **`public/index.php` boot-failure `error_log` fixed** — was
+  `error_log($th)` (TypeError: needs string); now logs
+  `message in file:line`; envelope stays JSON `BOOT_FAILED`.
+- **`Boot::loadDotEnv()` removed** — the flat `BONERADF_*` putenv loader
+  collided with dot-notation keys; superseded by `Config::parseDotEnv()`.
+- **`AuthModule` reads `app.key` / `cors.origins`** from Config (dot keys).
+- **`tests/env.php` slimmed** — selects `BONERADF_DB_ENV=test`; all
+  values come from `.env` (single source).
 
 - **`public/index.php` adopts the `test.php` bootstrap structure verbatim**:
   captured built-ins (`$call` / `$lock_as` / `$is_locked_as`), `basepath` +

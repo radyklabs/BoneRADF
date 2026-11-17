@@ -42,7 +42,7 @@ try
 
 catch (Throwable $th)
 {
-    error_log ($th);
+    error_log ($th->getMessage () . ' in ' . $th->getFile () . ':' . $th->getLine ());
     // Headless contract holds even on boot failure: emit a JSON envelope.
     http_response_code (500);
     header ('Content-Type: application/json; charset=utf-8');
