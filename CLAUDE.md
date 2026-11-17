@@ -188,6 +188,17 @@ targets this directory.
 | `>audit` | Deep audit: manual file-by-file, line-by-line review of all in-scope text files under `app/` (source, tests, config, docs); tools (micro test runner, lint) are **evidence only** — a green run is never the audit itself. Read every in-scope file end to end; keep a coverage ledger. Trace execution paths per entry point. Correlate definitions ↔ consumption across files (config keys, registry, interfaces, tests ↔ behavior, docs ↔ code). Flag dead/unreachable code, junk, and per-request redundant work — state reachability evidence before labeling. Walk every trust boundary (input, routing, authn/authz, output escaping, SQL parameterization, path guards, cache/FS writes, secrets, error disclosure, CI supply chain); for each, state the guard (file:line) or the gap. Note anomalies (style drift, stale comments, version skew). Classify findings CONFIRMED / HYPOTHESIS / INTENTIONAL-TRADE-OFF with severity. Record in `app/docs/REPORT.md` (dated entry, branch + commit, scope, coverage ledger, findings with remediation + verification plan). Update PLAN + CHANGELOG. Do not silently fix during audit. |
 | `>release` | One invocation prepares, merges, and tags in one pass. Requires a clean `dev` branch. Verify release readiness (tests green, CHANGELOG complete, `vX.Y.Z` tag does not exist). Review the `dev` → `main` diff; stop if it includes unrelated changes. Move `[Unreleased]` entries to `## [X.Y.Z] - YYYY-MM-DD` in `app/docs/CHANGELOG.md`, add a fresh empty `[Unreleased]` section, update version. Commit as `chore(release): X.Y.Z`, push `dev`, open a PR to `main` titled `chore(release): X.Y.Z`. Merge with `gh pr merge --merge` when rules permit; if blocked, stop and report the blocker. Do not tag on `dev`. Tag creation is owned by CI (`.github/workflows/release-tag.yml`, deferred — see below) or manual `git tag vX.Y.Z -m "..."` + `git push origin vX.Y.Z` as a fallback until CI exists. Verify the tag points to the exact merge commit before reporting success. |
 
+### `bone` CLI subcommands (v1)
+
+| Subcommand | Action |
+|---|---|
+| `routes` | List all registered routes (METHOD / PATTERN / ALIAS) |
+| `modules` | Scan `modules/*/Config/{modules,routing}.php`; show STATUS (active/inactive) + route count + class |
+| `make:module <Name> [--with-db]` | Generate a full-FVC module skeleton under `modules/<Name>/` with namespaces pre-filled; `--with-db` adds a `seed.php`; refuses overwrite |
+
+(`test` + `make:*` were planned for v1.1; `make:module` shipped pre-1.0.)
+
+
 ### `>release` — CI note
 The `release-tag.yml` GitHub Actions workflow is **deferred** until v1.0
 candidate (M3). Until it exists, `>release` uses the manual-tag fallback.

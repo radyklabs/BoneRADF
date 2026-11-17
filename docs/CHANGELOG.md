@@ -127,6 +127,10 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - **`modules/Test/` + `public/assets/css/style.css`** — new WIP module
   (`Manifest.php` bootstrap, `Controllers/TestController`) + landing
   stylesheet.
+- **P9.5 hardening (review-driven)** — Config wired into Boot, DB
+  fail-closed, DB-availability activation, `find()` queue-respecting, route
+  metachar escape, pipeline-per-request, RBAC wiring semantics, minor
+  cleanup; see `PLAN-P9.5.md` + `REVIEW-2026-11-17-v2.md`.
 
 ### Changed
 
@@ -176,6 +180,9 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ### Removed
 
+- **Hardcoded DB dev fallbacks** (`root`/`root`/`local`/port `10028`) in
+  `Database::fromEnv()` — removed; fail-closed, and `tests/env.php` supplies
+  the dev DSN for tests.
 - `src/Manifest/Modules.php` — the central active-module whitelist. Modules
   are now auto-discovered from `modules/*/Config/modules.php`; activation is
   each module's own `Config/routing.php` (see Added).

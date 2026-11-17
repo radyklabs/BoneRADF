@@ -127,6 +127,10 @@ final class Route
         $pattern = $this->pattern;
         $names   = [];
 
+        // Escape every literal segment (no placeholder) up front, so a
+        // literal `.` in a route pattern matches only `.`, not any char.
+        $pattern = $this->escapeLiterals ($pattern);
+
         // Custom regex: {name:/body/} — capture inner body (no nested slashes issue).
         $pattern = preg_replace_callback (
             '/\{(\w+):\/([^\/]+)\/\}/',
@@ -166,7 +170,8 @@ final class Route
         ) ?? $pattern;
 
         // Escape anything left that PCRE would treat as a metacharacter,
-        // preserving the already-inserted (?P<...>…) groups.
+        // preserving the already-inserted (?P<...>…) groups. (Done up front
+        // in escapeLiterals on the raw pattern — no-op here.)
         $regex = '~^' . $pattern . '$~';
 
         if (@preg_match ($regex, '') === false)
@@ -175,6 +180,31 @@ final class Route
         }
 
         return $regex;
+    }
+
+    /**
+     * preg_quote every literal segment of $pattern except the placeholder
+     * segments (`{name:type}`, `{name}`, `:name`, `{name:/regex/}`), which
+     * are kept intact so the callbacks below can turn them into safe named
+     * groups. A literal `.` in a route pattern matches only `.`, not any
+     * char.
+     */
+    private function escapeLiterals (string $pattern): string
+    {
+        $parts = preg_split ('/(\{[^}]+\}|:\w+)/', $pattern, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+        if ($parts === false)
+        {
+            return preg_quote ($pattern, '~');
+        }
+
+        $out = '';
+        $isPlaceholder = false;
+        foreach ($parts as $part)
+        {
+            $out .= $isPlaceholder ? $part : preg_quote ($part, '~');
+            $isPlaceholder = !$isPlaceholder;
+        }
+        return $out;
     }
 
     /**

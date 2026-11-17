@@ -16,16 +16,13 @@ declare(strict_types=1);
 
 require dirname(__DIR__, 2) . '/src/Kernel/Boot.php';
 
-use Boneradf\Database\ConnectionFactory;
-
-// Credentials: DB name `local`, host 127.0.0.1, port 10028, user/pass root/root.
-// These are dev-only sample values (recorded in docs/CONFIG.md, never committed to code secrets).
-$dsn  = 'mysql:host=127.0.0.1;port=10028;dbname=local;charset=utf8mb4';
-$user = 'root';
-$pass = 'root';
+// Single shared DB source for the seed (also used by tests/support/db.php).
+$dsn  = getenv ('BONERADF_DB_DSN') ?: 'mysql:host=127.0.0.1;port=10028;dbname=local;charset=utf8mb4';
+$user = getenv ('BONERADF_DB_USER') ?: 'root';
+$pass = getenv ('BONERADF_DB_PASS') ?: 'root';
 
 try {
-    $factory = new ConnectionFactory($dsn, $user, $pass, [
+    $factory = new Boneradf\Database\ConnectionFactory($dsn, $user, $pass, [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES  => false,

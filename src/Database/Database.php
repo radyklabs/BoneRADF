@@ -2,7 +2,9 @@
 
 namespace Boneradf\Database;
 
+use Boneradf\Config\Config;
 use PDO;
+use RuntimeException;
 
 /**
  * System-level PDO source — the single place that reads BONERADF_DB_* env.
@@ -19,9 +21,14 @@ final class Database
     private static ?PDO $pdo = null;
 
     /**
-     * Shared PDO built from env with framework-default fallbacks.
+     * Shared PDO built from `Config` (system-level `BONERADF_DB_*`).
      *
-     * @throws \RuntimeException on connection failure
+     * Fail-closed: throws when a required DB config key is unset or empty —
+     * no hardcoded dev DSN/user/pass fallbacks (the LocalWP `root/root`
+     * values are gone; see decision D9 "secrets always from env").
+     *
+     * @throws RuntimeException when a required key is missing
+     * @throws \PDOException     on connection failure
      */
     public static function fromEnv (): PDO
     {
@@ -30,9 +37,17 @@ final class Database
             return self::$pdo;
         }
 
-        $dsn  = getenv ('BONERADF_DB_DSN') ?: 'mysql:host=127.0.0.1;port=10028;dbname=local;charset=utf8mb4';
-        $user = getenv ('BONERADF_DB_USER') ?: 'root';
-        $pass = getenv ('BONERADF_DB_PASS') ?: 'root';
+        $config = Config::loadSystem ();
+        $dsn    = $config->get ('boneradf.db.dsn');
+        $user   = $config->getOr ('boneradf.db.user', '');
+        $pass   = $config->getOr ('boneradf.db.pass', '');
+
+        if ($dsn === '' || $dsn === null)
+        {
+            throw new RuntimeException (
+                'Database: BONERADF_DB_DSN is not set. Provide it in the environment (or a Config).'
+            );
+        }
 
         return self::$pdo = (new ConnectionFactory ($dsn, $user, $pass, [
             PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,

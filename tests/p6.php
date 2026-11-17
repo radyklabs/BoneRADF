@@ -14,6 +14,9 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/src/Kernel/Boot.php';
 
+// Ensure the fail-closed Config path is satisfied for this test (dev-only DSN).
+require dirname(__DIR__) . '/tests/env.php';
+
 Boneradf\Kernel\Boot::init();
 
 use Boneradf\Kernel\Request;
@@ -23,6 +26,9 @@ use Modules\Auth\Models\UserModel;
 use Modules\Auth\Services\LoginService;
 use Boneradf\Security\AuthGuard;
 use Boneradf\Validator\Validator;
+
+// Ensure the fail-closed Config path is satisfied for this test (dev-only DSN).
+require dirname(__DIR__) . '/tests/env.php';
 
 $pass = 0;
 $fail = 0;

@@ -28,6 +28,77 @@ final class Config
     private array $required;
 
     /**
+     * Process-wide singleton. `Boot::init()` builds it via
+     * `Config::loadSystem()`; every other consumer (Database, AuthGuard,
+     * CsrfGuard, modules) reads through it — no more inline `getenv()`.
+     *
+     * ponytail: one Config per process (the kernel is per-request but the
+     * env it was built from is not). Upgrade path: a per-environment
+     * override if a deploy ever needs runtime config reload.
+     */
+    private static ?self $instance = null;
+
+    /**
+     * Build the process-wide system Config from BONERADF_* env vars.
+     * Idempotent — repeated calls return the same instance.
+     *
+     * @throws RuntimeException if a required key (BONERADF_APP_KEY) is unset.
+     */
+    public static function loadSystem (): self
+    {
+        if (self::$instance !== null)
+        {
+            return self::$instance;
+        }
+
+        self::$instance = new self ([
+            'boneradf.app_key'   => null,
+            'boneradf.db.dsn'    => null,
+            'boneradf.db.user'   => null,
+            'boneradf.db.pass'   => null,
+            'boneradf.cors'      => null,
+        ], [
+            'boneradf.app_key'   => 'string',
+            'boneradf.db.dsn'    => 'string',
+            'boneradf.db.user'   => 'string',
+            'boneradf.db.pass'   => 'string',
+            'boneradf.cors'      => 'string',
+        ], [
+            'boneradf.app_key'   => true,
+            'boneradf.db.dsn'    => true,
+            'boneradf.db.user'   => true,
+            'boneradf.db.pass'   => true,
+        ], [], [
+            'boneradf.app_key'   => getenv ('BONERADF_APP_KEY') ?: '',
+            'boneradf.db.dsn'    => getenv ('BONERADF_DB_DSN') ?: '',
+            'boneradf.db.user'   => getenv ('BONERADF_DB_USER') ?: '',
+            'boneradf.db.pass'   => getenv ('BONERADF_DB_PASS') ?: '',
+            'boneradf.cors'      => getenv ('BONERADF_CORS_ORIGINS') ?: '',
+        ]);
+
+        // Empty-string env values mean "unset" for our fail-closed keys:
+        // a caller passing a required key as '' would otherwise pass the
+        // "array_key_exists" check above. Coerce '' → null and re-validate.
+        foreach (['boneradf.app_key', 'boneradf.db.dsn', 'boneradf.db.user', 'boneradf.db.pass'] as $k)
+        {
+            if (self::$instance->get ($k) === '')
+            {
+                throw new RuntimeException ("Config: required key '{$k}' is set to an empty value; provide a real value.");
+            }
+        }
+
+        return self::$instance;
+    }
+
+    /**
+     * Test/CLI escape hatch: replace the process-wide instance.
+     */
+    public static function setInstance (self $instance): void
+    {
+        self::$instance = $instance;
+    }
+
+    /**
      * @param array<string, mixed> $defaults  key => default value
      * @param array<string, string> $types    key => 'string'|'int'|'float'|'bool'|'array'
      * @param array<string, bool>  $required  key => true

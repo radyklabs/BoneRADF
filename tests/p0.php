@@ -16,6 +16,7 @@ Boneradf\Kernel\Boot::withoutModules();
 use Boneradf\Kernel\Kernel;
 use Boneradf\Kernel\Request;
 use Boneradf\Kernel\Response;
+use Boneradf\Middleware\Pipeline;
 
 $pass = 0;
 $fail = 0;
@@ -88,6 +89,23 @@ try {
     $missing = $e;
 }
 check('view: missing view file throws', $missing !== null);
+
+// --- Kernel: pipeline is cloned per request (no cross-request leak) ---
+class PipelineProbe implements \Boneradf\Contracts\Middleware
+{
+    public function handle(\Boneradf\Kernel\Request $req, callable $next): \Boneradf\Kernel\Response
+    {
+        return $next($req);
+    }
+}
+$probeRouter = new \Boneradf\Router\Router();
+$probeRouter->get('/probe', fn ($r, $p) => Response::json(['ok' => true]));
+$sharedPipeline = new Pipeline();
+$sharedPipeline->add(new PipelineProbe());
+$kernelShared = new Kernel($probeRouter, $sharedPipeline);
+$kernelShared->handle(new Request('GET', '/probe'));
+$kernelShared->handle(new Request('GET', '/probe'));
+check('pipeline: shared instance not mutated by dispatch', count($sharedPipeline->all()) === 1);
 
 // --- Kernel ---
 $kernel = new Kernel();

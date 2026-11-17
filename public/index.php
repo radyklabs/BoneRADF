@@ -43,7 +43,13 @@ try
 catch (Throwable $th)
 {
     error_log ($th);
-    die ("<h1>{$heading}</h1><p>Init: {$message}</p>");
-    // dev-only raw dump — keep commented while the boot path settles:
-    // die ("<h1>{$heading}</h1><p>Init: {$message}</p><p>{$th}</p>");
+    // Headless contract holds even on boot failure: emit a JSON envelope.
+    http_response_code (500);
+    header ('Content-Type: application/json; charset=utf-8');
+    echo json_encode ([
+        'error' => [
+            'code'    => 'BOOT_FAILED',
+            'message' => $message,
+        ],
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 }

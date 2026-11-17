@@ -70,7 +70,8 @@ final class FileLogger implements Logger
     }
 
     /**
-     * Redact values that look like secrets.
+     * Redact values whose keys look like secrets — recursively, so nested
+     * context (e.g. `context['user']['password']`) is covered too.
      *
      * @param array<string, mixed> $entry
      * @return array<string, mixed>
@@ -83,15 +84,14 @@ final class FileLogger implements Logger
         {
             if (is_array ($v))
             {
-                foreach ($v as $sk => $sv)
+                $entry[$k] = $this->redact ($v);
+                continue;
+            }
+            foreach ($sensitive as $s)
+            {
+                if (stripos ((string) $k, $s) !== false)
                 {
-                    foreach ($sensitive as $s)
-                    {
-                        if (stripos ((string) $sk, $s) !== false)
-                        {
-                            $entry[$k][$sk] = '[REDACTED]';
-                        }
-                    }
+                    $entry[$k] = '[REDACTED]';
                 }
             }
         }
