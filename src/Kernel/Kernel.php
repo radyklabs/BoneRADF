@@ -8,7 +8,7 @@ use Boneradf\Router\Router;
 use Boneradf\Middleware\Pipeline;
 use Boneradf\Container\Container;
 use Boneradf\Config\Config;
-use Boneradf\Logger\Logger;
+use Boneradf\Contracts\Logger;
 use Boneradf\Logger\FileLogger;
 use Throwable;
 

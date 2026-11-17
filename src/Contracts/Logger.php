@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Boneradf\Logger;
+namespace Boneradf\Contracts;
 
 /**
  * Minimal PSR-3-shaped log interface.

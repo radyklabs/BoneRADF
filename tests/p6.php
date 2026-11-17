@@ -12,7 +12,9 @@ declare(strict_types=1);
  * seeded sample user lives in. They are self-contained and idempotent.
  */
 
-require dirname(__DIR__) . '/src/Kernel/autoload.php';
+require dirname(__DIR__) . '/src/Kernel/Boot.php';
+
+Boneradf\Kernel\Boot::init();
 
 use Boneradf\Kernel\Request;
 use Boneradf\Kernel\Response;

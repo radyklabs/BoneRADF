@@ -1,0 +1,155 @@
+<?php declare (strict_types=1);
+
+/**
+ * Converts a string into a valid, PSR-4 compliant namespace.
+ *
+ * This function takes a string, such as a file path or a simple
+ * identifier, and transforms it into a clean, well-formed PHP namespace.
+ * It handles various separators, sanitizes segment names, and formats
+ * them in PascalCase, ensuring the output is ready for use in
+ * class definitions and dynamic lookups.
+ *
+ * @since  1.0.0
+ * @param  string $string The input string to convert.
+ * @return string The formatted, namespace-friendly string.
+ */
+function namespacify (string $string): string
+{
+	// 1. Normalize separators to backslashes.
+	$string = str_replace (['/', sep], '\\', $string);
+	// 2. Split into segments, removing empty ones.
+	$segments = array_filter (explode('\\', $string));
+	// 3. Sanitize and format each segment to PascalCase.
+	$cleaned_segments = array_map (function ($segment)
+	{
+		// Remove characters invalid in a namespace part.
+		$segment = preg_replace ('/[^a-zA-Z0-9_]/', ' ', $segment);
+		// Convert snake_case or kebab-case to PascalCase.
+		$pascal_case = str_replace (' ', '', ucwords (str_replace (['-', '_'], ' ', $segment)));
+		return $pascal_case;
+	},
+	$segments);
+	// 4. Rejoin into a single namespace string.
+	return implode ('\\', $cleaned_segments);
+}
+
+/**
+ * Normalise path separators to the current OS.
+ *
+ * Converts both '/' and '\' into the OS-native DIRECTORY_SEPARATOR,
+ * collapses consecutive separators, and correctly handles UNC paths
+ * (e.g., '\\server\share'). This creates a canonical, reliable
+ * filesystem path.
+ *
+ * @since  1.0.0
+ * @param  string $path Raw path string to clean.
+ * @return string A clean path using the correct OS separator.
+ */
+function pathify (string $path): string
+{
+	$prefix = '';
+	// Check for and preserve UNC path prefixes.
+	if (str_starts_with ($path, '//') || str_starts_with ($path, '\\\\'))
+	{
+		$prefix = sep . sep;
+		$path = substr ($path, 2);
+	}
+	// Collapse all separator types into a single, OS-specific separator.
+	$normalized_path = preg_replace ('/[\\\\\/]+/', sep, $path);
+	return $prefix . $normalized_path;
+}
+
+/**
+ * Join path segments into a single normalised path.
+ *
+ * Glues multiple folder/file parts together with '/' separator,
+ * safe for both filesystem (Windows accepts '/') and URLs.
+ * Trims extra slashes and skips empty segments.
+ *
+ * Example: interlace('system', 'Core', 'Boot.core') → 'system/Core/Boot.core'
+ *
+ * @since  1.0.0
+ * @param  string ...$segments One or more path parts to concatenate.
+ * @return string The resulting combined path.
+ */
+function interlace (...$segments)
+{
+	$cleaned = [];
+
+	foreach ($segments as $seg)
+	{
+		$seg = trim ((string) $seg, '/\\');
+		if ($seg!=='') {$cleaned[] = $seg;}
+	}
+	
+	$path = implode ('/', $cleaned);
+
+	$first = (string) $segments[0];
+	
+	if (str_starts_with ($first, '/') && !str_starts_with ($path, '/'))
+	{
+		$path = '/' . $path;
+	}
+
+	return pathify ($path);
+}
+
+/**
+ * Extract the `$directories` map from the web entry file (index.php).
+ *
+ * Tokenizes the source, locates the `$directories = [ ... ]` assignment
+ * and returns its top-level `key => value` string pairs. Returns an empty
+ * array when the file is missing or holds no such array literal.
+ *
+ * @since  1.0.0
+ * @param  string $file Absolute path to the entry file (index.php).
+ * @return array<string, string>  name => directory (relative to project root).
+ */
+function read_directories (string $file): array
+{
+	if (!is_file ($file)) { return []; }
+
+	$tokens = token_get_all ((string) file_get_contents ($file));
+	$count  = count ($tokens);
+
+	for ($i = 0; $i < $count; $i++)
+	{
+		$token = $tokens[$i];
+		if (!is_array ($token) || $token[0] !== T_VARIABLE || $token[1] !== '$directories')
+		{
+			continue;
+		}
+
+		// Skip trivia: expect '=' then the opening '['.
+		$i++;
+		while ($i < $count && is_array ($tokens[$i]) && in_array ($tokens[$i][0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) { $i++; }
+		if ($i >= $count || $tokens[$i] !== '=') { continue; }
+
+		$i++;
+		while ($i < $count && is_array ($tokens[$i]) && in_array ($tokens[$i][0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) { $i++; }
+		if ($i >= $count || $tokens[$i] !== '[') { continue; }
+
+		// Collect the literal body up to the matching ']' (nested-safe).
+		$depth = 0;
+		$body  = '';
+		for (; $i < $count; $i++)
+		{
+			$chunk = is_array ($tokens[$i]) ? $tokens[$i][1] : $tokens[$i];
+
+			if ($chunk === '[') { $depth++; }
+			elseif ($chunk === ']') { $depth--; if ($depth === 0) { break; } }
+
+			if ($depth > 0) { $body .= $chunk; }
+		}
+
+		// Flat string pairs only: 'system' => 'src'.
+		preg_match_all ("/['\"]?([A-Za-z_][A-Za-z0-9_]*)['\"]?\s*=>\s*['\"]([^'\"]*)['\"]/", $body, $pairs, PREG_SET_ORDER);
+
+		$map = [];
+		foreach ($pairs as $pair) { $map[$pair[1]] = $pair[2]; }
+
+		return $map;
+	}
+
+	return [];
+}

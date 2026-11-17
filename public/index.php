@@ -1,45 +1,49 @@
-<?php
+<?php declare (strict_types=1);
 
-declare(strict_types=1);
+// These messages are visible only if the framework cannot load at all.
+$heading = 'Internal System Error';
+$message = 'An unexpected error occurred. Please contact the Administrator.';
 
-require dirname(__DIR__) . '/src/Kernel/autoload.php';
-
-use Boneradf\Kernel\Kernel;
-use Boneradf\Kernel\Request;
-use Boneradf\Router\Router;
-use Boneradf\Middleware\Pipeline;
-use Boneradf\Container\Container;
-use Boneradf\Module\Module;
-
-$router   = new Router();
-$pipeline = new Pipeline();
-$container = new Container();
-
-// Register default routes
-$router->get('/health', fn () => ['status' => 'ok']);
-$router->get('/hello',  fn () => ['message' => 'Hello, world!']);
-
-// ------------------------------------------------------------------
-// Module composition root (ARCHITECTURE §5).
-//
-// Each development module self-registers its routes / middleware / bindings in
-// boot(). Registration is explicit here (not auto-discovery) so the set of
-// active modules is greppable and reviewable. To add a module, append its
-// class to $modules.
-//
-// ponytail: hardcoded module list; upgrade to a config-driven manifest when
-// module selection becomes environment-dependent (P2.1 .env loader).
-// ------------------------------------------------------------------
-/** @var array<int, Module> $modules */
-$modules = [
-    new \Modules\Auth\AuthModule(),
-    new \Modules\Resources\ResourcesModule(),
-];
-
-foreach ($modules as $module) {
-    $module->boot($container, $router, $pipeline);
+// Confirm that the three built-in functions we depend on are available.
+// Each is captured into a variable reference so we never call them
+// by literal name — a defence-in-depth measure.
+if (!is_callable ('call_user_func', false, $call)
+    || !is_callable ('define', false, $lock_as)
+    || !is_callable ('defined', false, $is_locked_as))
+{
+    die ("<h1>{$heading}</h1><p>{$message}</p>");
 }
 
-$kernel   = new Kernel($router, $pipeline, $container);
-$response = $kernel->handle(Request::fromGlobals());
-$response->emit();
+// `basepath` is the resolved /public/ directory. Every path in the
+// framework derives from it. `sep` caches the directory separator.
+$lock_as ('basepath', $call ('realpath', __DIR__));
+
+if (!$is_locked_as ('sep')) $lock_as ('sep', DIRECTORY_SEPARATOR);
+
+// name => directory (relative to the project root, one level above /public/)
+$directories = [
+    'system'    => 'src',
+    'modules'   => 'modules'
+];
+
+try
+{
+    // The caller file lives one level above /public/. It wires up the
+    // autoloader, error handler, and returns the Bootstrap class name.
+    @require $call ('implode', '.', [$call ('dirname', basepath).sep, 'config']);
+
+    if (isset ($bootkey) && class_exists ($bootkey))
+    {
+        $bootkey::init ()
+            ->handle (\Boneradf\Kernel\Request::fromGlobals ())
+            ->emit ();
+    }
+}
+
+catch (Throwable $th)
+{
+    error_log ($th);
+    die ("<h1>{$heading}</h1><p>Init: {$message}</p>");
+    // dev-only raw dump — keep commented while the boot path settles:
+    // die ("<h1>{$heading}</h1><p>Init: {$message}</p><p>{$th}</p>");
+}

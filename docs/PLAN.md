@@ -21,6 +21,11 @@ where noted as actual docs.
 - PSR-15-style `Request` / `Response` objects (JSON body handling)
 - Project skeleton layout establishing the "common structure" — D4
 
+**Actual (2026-11-17)**: autoloader + composition root consolidated in
+`src/Kernel/Boot.php` (`Boot::init()` → `Kernel`); `src/Manifest/` holds the
+system route aliases + active-module list; each module declares
+`Config/{modules,routing}.php`. `public/index.php` is 3 lines.
+
 **Verification check**: One route served via `php -S` (built-in server)
 returning a JSON body; boots with no `vendor/` directory present.
 
@@ -148,7 +153,7 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 | P5.4 | Dockerfile / PHP-FPM deploy recipe + verification | P5 | ✅ Done |
 | — | **Post-v1 sample: login feature (end-to-end)** | **post-v1** | 🔵 Info |
 | P6.0 | Sample DB: `modules/Auth/seed.php` idempotent — `users` table + seed user in DB `local` | post-v1 | ✅ Done |
-| P6.1 | Module system: `src/Module/Module.php` interface + module-aware autoloader (`Modules\*`) | post-v1 | ✅ Done |
+| P6.1 | Module system: `src/Contracts/Module.php` interface (was `src/Module/`) + module-aware autoloader (`Modules\*`) | post-v1 | ✅ Done |
 | P6.2 | `AuthModule` (`modules/Auth/AuthModule.php`) — self-registers login/refresh routes + global CORS | post-v1 | ✅ Done |
 | P6.3 | `modules/Auth/src/LoginService.php` (validate → query → `password_verify` → issue access+refresh, timing-uniform dummy hash) | post-v1 | ✅ Done |
 | P6.4 | `public/index.php` = composition root (boots `AuthModule`, no inline login wiring) | post-v1 | ✅ Done |

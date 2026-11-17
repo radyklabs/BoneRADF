@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Boneradf\Middleware;
 
+use Boneradf\Contracts\Middleware;
 use Boneradf\Kernel\Request;
 use Boneradf\Kernel\Response;
 

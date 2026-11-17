@@ -279,7 +279,7 @@ Every error, every route, every environment:
 ```php
 namespace App\Modules\Billing;
 
-use Boneradf\Module\Module;
+use Boneradf\Contracts\Module;
 
 final class BillingModule implements Module
 {

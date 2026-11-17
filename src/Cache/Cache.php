@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Boneradf\Cache;
 
+use Boneradf\Contracts\CacheDriver;
+
 /**
  * Cache facade — delegates to a configured driver.
  */

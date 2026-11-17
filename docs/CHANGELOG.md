@@ -29,6 +29,83 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Composition root moved to `src/Kernel/Boot.php`**: static `Boot::init()`
+  registers the PSR-4 autoloader (single source of truth — replaces
+  `src/Kernel/autoload.php`, now removed), builds Router / Pipeline /
+  Container, discovers + boots modules, merges system + module route aliases,
+  and returns a per-request `Kernel`. `Boot::withoutModules()` for the
+  no-DB test harness; `Boot::routes()` + `Boot::registerAutoloader()` for
+  `bin/bone`. `public/index.php` is now 3 lines (require → `init()` →
+  `handle()` → `emit()`). `public/test.php` (gitignored scratch) drives the
+  same chain through `.config` / `.supports` for bootstrap testing.
+- **`src/Manifest/{Routing,Modules}.php`**: system-level default route
+  aliases (`GET /`, `GET /health`) and the active-module list — the single
+  gate for module activation. Growth is +1 line per module.
+- **Module manifests + declarative routes**: each active module declares
+  `modules/<Name>/Config/modules.php` (class, `depends_on`) and
+  `modules/<Name>/Config/routing.php` (`'METHOD /path/{param:type}' =>
+  [Controller::class, 'method']`). `Boot` topologically sorts by
+  `depends_on` (fail-closed on cycle / unknown dep / missing class), and
+  fails boot on duplicate aliases across system + module sources. Handlers
+  resolve from the container when bound, else `new`.
+- **Typed route segments** (`{id:int}` / `{id:num}` / `{id:slug}` /
+  `{id:uuid}` / `{id:any}` / custom `{id:/regex/}`) in `Route::match()`;
+  legacy `:param` still matched as untyped. `/api/resources/{id:int}` now
+  404s on `/api/resources/abc`.
+- **Controllers**: `Controller\DefaultController` (welcome + health),
+  `Modules\Auth\AuthController` (login, refresh, csrfToken, preflight),
+  `Modules\Resources\ResourceController` (list/show/create/update/delete +
+  preflight) — route bodies moved out of `AuthModule` / `ResourcesModule`,
+  which now only wire container bindings.
+- `.config` / `.supports` are tracked (bootstrap contract) with a
+  `!defined('basepath')` direct-access guard (404 + exit).
+- **Docs + config batch**: `ARCHITECTURE.md` (§1 diagram, §3 boot steps, §5
+  module layout + declarative routes + Contracts/Controller/Manifest
+  conventions), `PLAN.md` (actual-state note, P6.1 row), `PRD.md` +
+  `API_GUIDE.md` (`Boneradf\Contracts\Module`), `REPORT.md` (composition-root
+  row, module-system row), `CLAUDE.md` (directory layout), `.gitignore`
+  (`/public/test.php` scratch), `.vscode/settings.json` (`.config` → php).
+
+### Changed
+
+- **`public/index.php` adopts the `test.php` bootstrap structure verbatim**:
+  captured built-ins (`$call` / `$lock_as` / `$is_locked_as`), `basepath` +
+  `sep` constants, the `$config` namespace map, `@require` of `.config`
+  (one level up, guarded by `!defined('basepath')`), then
+  `$bootkey::init()->handle(Request::fromGlobals())->emit()`. Boot failures
+  log the raw `Throwable` via `error_log()` and die with the generic
+  envelope; the raw HTML dump stays in a comment for dev. `test.php`
+  remains a gitignored scratch copy of the same structure.
+- **`src/Module/Module.php` → `src/Contracts/Module.php`** (namespace
+  `Boneradf\Contracts`) — `Contracts/` holds framework interfaces/traits.
+  References updated in `AuthModule`, `ResourcesModule`, `Boot`, `API_GUIDE`.
+- **All remaining interfaces moved to `src/Contracts/`**: `Logger`
+  (was `src/Logger/`), `CacheDriver` (was `src/Cache/`), `Middleware`
+  (was `src/Middleware/`) — namespace `Boneradf\Contracts`. Implementations
+  stay in their domain folders (`FileLogger`, `MemoryDriver`/`FileDriver`,
+  `Pipeline`, security guards). Callers updated: `Kernel`, `Router`,
+  `Pipeline`, `Cache`, drivers, `Security/*`, `tests/p1`.
+- **`Manifest/DefaultController` → `src/Controller/DefaultController.php`**
+  (namespace `Boneradf\Controller`) — `src/Manifest/` is data-only
+  (`Routing.php`, `Modules.php`); handlers live in `src/Controller/`.
+- **`bin/bone routes`** lists the real merged route table via
+  `Boot::routes()` (columns: METHOD / PATTERN / ALIAS); **`bin/bone modules`**
+  reads `src/Manifest/Modules.php` + each module's manifest instead of a
+  hardcoded security-module list.
+- Route handlers are `[Controller::class, 'method']` (array callable) instead
+  of closures; `Route` now carries the source alias as its name.
+- Entry points (`bin/bone`, `tests/p0–p6`, `modules/*/seed.php`) require
+  `src/Kernel/Boot.php`; unit tests call `Boot::withoutModules()` so they do
+  not need `pdo_mysql`.
+- `.config` boot guard fixed: `!isset($config['boot']) && …` (never fired) →
+  `class_exists($bootkey, false)` after `require_once`; the dead
+  `$config['boot'] = true` self-mutation in `Boot.php` is gone.
+
+### Removed
+
+- `src/Kernel/autoload.php` — replaced by `Boot::autoload()` (one source of
+  truth, class-based). All 11 entry points updated in the same change.
+
 - **Module system (ARCHITECTURE §5, planned → implemented)**: `src/Module/Module.php`
   (`boot(Container, Router, Pipeline)` interface) + module-aware autoloader
   (`Boneradf\*` → `src/`, `Modules\*` → `modules/<Name>/src/` and

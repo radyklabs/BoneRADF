@@ -6,7 +6,7 @@ namespace Boneradf\Security;
 
 use Boneradf\Kernel\Request;
 use Boneradf\Kernel\Response;
-use Boneradf\Middleware\Middleware;
+use Boneradf\Contracts\Middleware;
 
 /**
  * CSRF middleware — ON by default for cookie-authenticated flows (D5).

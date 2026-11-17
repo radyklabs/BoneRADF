@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Boneradf\Cache;
+namespace Boneradf\Contracts;
 
 /**
  * Cache driver interface.

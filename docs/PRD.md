@@ -62,7 +62,7 @@ Explicitly out of scope for v1.0:
 - **No bundled sample feature in v1.0** — v1 ships the framework core (kernel,
   router, middleware, config, DI, logger, DB builder, validator, security
   modules, cache, test runner, CLI). The **module system** (ARCHITECTURE §5:
-  `src/Module/Module.php` + module-aware autoloader + composition-root
+  `src/Contracts/Module.php` + module-aware autoloader + composition-root
   registration) is implemented post-v1 as the development-layer separation
   between core and feature code. The sample *Auth module*
   (`modules/Auth/` → `/api/auth/login` + `/api/auth/refresh` + `users`

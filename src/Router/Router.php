@@ -6,7 +6,7 @@ namespace Boneradf\Router;
 
 use Boneradf\Kernel\Request;
 use Boneradf\Kernel\Response;
-use Boneradf\Middleware\Middleware;
+use Boneradf\Contracts\Middleware;
 
 /**
  * HTTP router: method + path matching with `:param` syntax.
@@ -37,13 +37,14 @@ final class Router
      * Register a route.
      *
      * @param string   $method     HTTP method (upper)
-     * @param string   $pattern    Path pattern, e.g. `/users/:id`
+     * @param string   $pattern    Path pattern, e.g. `/users/{id:int}`
      * @param callable $handler    fn(Request, array $params): Response|array
      * @param string[] $middleware Route-specific middleware names
+     * @param string   $name       Route name (alias source string)
      */
-    public function add(string $method, string $pattern, callable $handler, array $middleware = []): Route
+    public function add(string $method, string $pattern, callable $handler, array $middleware = [], string $name = ''): Route
     {
-        $route = new Route(strtoupper($method), $pattern, $handler, $middleware);
+        $route = new Route(strtoupper($method), $pattern, $handler, $middleware, $name);
         $this->routes[] = $route;
         return $route;
     }

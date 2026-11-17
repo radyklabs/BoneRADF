@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Boneradf\Logger;
 
+use Boneradf\Contracts\Logger;
+
 /**
  * Structured JSON-line logger.
  *

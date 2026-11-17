@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Boneradf\Cache;
 
+use Boneradf\Contracts\CacheDriver;
 use RuntimeException;
 
 /**

@@ -6,7 +6,7 @@ namespace Boneradf\Security;
 
 use Boneradf\Kernel\Request;
 use Boneradf\Kernel\Response;
-use Boneradf\Middleware\Middleware;
+use Boneradf\Contracts\Middleware;
 
 /**
  * CORS middleware — enables cross-origin requests from an allowlisted origin.

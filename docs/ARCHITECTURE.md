@@ -12,7 +12,7 @@ BoneRADF is a headless JSON/REST microservice framework: one install = one micro
 HTTP request
     |
     v
-public/index.php            (front controller: single entry point)
+public/index.php            (front controller: 3 lines, delegates to Boot)
     |
     v
 Kernel                      (boot pipeline, see §3)
@@ -60,7 +60,7 @@ Trade-off accepted: no built-in service discovery or inter-service RPC. Services
 
 Precise order. Steps are numbered; each must complete before the next.
 
-1. **Autoloader** — register the custom PSR-4 autoloader for root namespace `Boneradf\` (and module namespaces, step 5). No Composer at runtime.
+1. **Autoloader** — `src/Kernel/Boot.php` registers the custom PSR-4 autoloader for root namespace `Boneradf\` (and module namespaces, step 5). No Composer at runtime. `Boot::init()` is static and boot-scope only; it returns an instance `Kernel` so no request state is held across requests.
 2. **Config load** — read typed, env-aware config (§7): `.env` or JSON, environment overrides applied. Fail fast on missing required keys.
 3. **Container** — instantiate the light DI container (§4), register core bindings (Config, Logger, Router, PDO factory, etc.).
 4. **Logging** — create the structured logger (§10) and bind it; from here boot failures are logged, not just fatal-echoed.
@@ -93,19 +93,30 @@ v1.0 candidate).
 ```
 modules/
   <ModuleName>/
-    src/              (PSR-4, namespace Modules\<ModuleName>\)
+    Config/
+      modules.php    (manifest: class, depends_on)
+      routing.php    (aliases: 'METHOD /path/{param:type}' => [Controller::class, 'method'])
+    src/             (PSR-4, namespace Modules\<ModuleName>\)
     <ModuleName>Module.php  (module bootstrap class, at module root)
-    <module>.php      (optional: seed / migration / bootstrap scripts)
+    <module>.php     (optional: seed / migration / bootstrap scripts)
 ```
 
-Autoloading: the custom PSR-4 autoloader maps
+Autoloading: `Boot::autoload()` maps
 `Modules\<Name>\X` → `modules/<Name>/src/X.php` (and checks
 `modules/<Name>/X.php` for the bootstrap class). No Composer, no auto-discovery.
+
+Framework-side layout conventions:
+
+```
+src/Contracts/     interfaces + traits (Module, Middleware, Logger, CacheDriver)
+src/Controller/    core controllers (DefaultController)
+src/Manifest/      data-only manifests (Routing aliases, active module list)
+```
 
 Minimal contract (implemented):
 
 ```
-interface Module  // src/Module/Module.php
+interface Module  // src/Contracts/Module.php
 {
     public function name(): string;
     public function boot(Container $container, Router $router, Pipeline $pipeline): void;
@@ -115,23 +126,29 @@ interface Module  // src/Module/Module.php
 A module may, inside `boot()`:
 
 - bind services into the container (explicit bindings only, §4);
-- register routes (§6) — typically under a module-scoped prefix via
-  `Router::group('<prefix>', …)` so the module's routes are relative to its
-  own URL segment (e.g. `AuthModule` registers `/login` under group prefix
-  `/api/auth` → public URL `/api/auth/login`);
 - register middleware onto the pipeline (§7 order: core defense middleware is
   registered first and cannot be reordered away by modules; modules append);
 - register config keys with defaults.
+
+Routes are **declarative**, not registered in `boot()`: they live in
+`modules/<Name>/Config/routing.php` as `'METHOD /path/{param:type}' =>
+[Controller::class, 'method']` (array callable — no closures, no string
+resolver). `Boot` merges system aliases (`src/Manifest/Routing.php`) with
+each active module's aliases and fails boot on duplicates.
 
 A module must NOT: write to globals, emit output during boot, or mutate
 another module's bindings. Installable security modules (SecurityHeaders,
 CSRF, Auth JWT+cookie, RBAC, RateLimit) ship as modules and are ON by default
 — they follow the same contract; they are simply pre-registered by the Kernel.
 
-**Composition root** (`public/index.php`) is the single place modules are
-instantiated and booted. Registration is explicit (a hardcoded `$modules`
-list), not auto-discovery, so the active module set is greppable and
-reviewable. This preserves §7's "no `global()` leakage" rule.
+**Composition root** (`src/Kernel/Boot.php`) is the single place modules are
+discovered, instantiated, and booted. Activation is explicit: a module must
+appear in `src/Manifest/Modules.php` *and* declare `Config/modules.php` —
+otherwise it is inert (fail-closed). Boot order is topological over each
+manifest's `depends_on`; cycles, unknown dependencies, missing classes, and
+duplicate route aliases all fail boot. This preserves §7's "no `global()`
+leakage" rule. `public/index.php` stays the front controller and only calls
+`Boot::init()->handle(Request::fromGlobals())->emit()`.
 
 The first module is `modules/Auth/` (login + refresh + CORS + `users` seed).
 
@@ -139,8 +156,8 @@ The first module is `modules/Auth/` (login + refresh + CORS + `users` seed).
 
 ## 6. Routing
 
-- **Match key**: HTTP method + path pattern. e.g. `GET /users/{id}`.
-- **Parameter extraction**: `{id}` segments become typed route params passed to the handler (string extraction at router level; type coercion is the handler/validator's job — strict Validator is a core component).
+- **Match key**: HTTP method + path pattern. e.g. `GET /users/{id:int}`.
+- **Parameter extraction**: `{id}` segments become route params passed to the handler. Typed placeholders constrain the match at the router level: `{id:int}` → `[0-9]+`, `{id:num}`, `{id:slug}`, `{id:uuid}`, `{id:any}`, or a custom regex `{id:/…/}`. A non-matching type does not match the route at all (404, not a 422). Final coercion/validation is still the handler/validator's job — strict Validator is a core component. Legacy `:id` syntax is matched as untyped.
 - **Route groups**: shared prefix + shared middleware + shared handlers namespace, composed additively:
 
 ```

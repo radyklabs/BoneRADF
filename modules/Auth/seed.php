@@ -14,7 +14,7 @@ declare(strict_types=1);
  * (CLI does not autoload pdo_mysql from the Lightning php.ini; pass -d.)
  */
 
-require dirname(__DIR__, 2) . '/src/Kernel/autoload.php';
+require dirname(__DIR__, 2) . '/src/Kernel/Boot.php';
 
 use Boneradf\Database\ConnectionFactory;
 

@@ -2,7 +2,8 @@
     "git.ignoreLimitWarning": false,
     "files.associations": {
         ".starter": "php",
-        ".supports": "php"
+        ".supports": "php",
+        ".config": "php",
     },
     "php.executablePath": "C:\\Users\\Rahen\\AppData\\Roaming\\Local\\lightning-services\\php-8.3.36+0\\bin\\win64\\php.exe",
 	"git.path": "D:\\Programs\\Git\\bin\\git.exe",

@@ -60,20 +60,22 @@ bin/bone                  — CLI binary: routes, modules, serve
 src/                      — PSR-4 root for Boneradf\ (core framework)
   Kernel/                 — bootstrap & request lifecycle
   Router/                 — routing, `:param` syntax
-  Middleware/             — PSR-15-style pipeline
+  Middleware/             — PSR-15-style pipeline (Pipeline)
   Container/              — light DI, explicit bindings only
   Config/                 — typed config, env > file > defaults
-  Logger/                 — structured logging
+  Logger/                 — structured logging (FileLogger)
   Database/               — PDO query builder, prepared statements only
   Validator/              — strict validation, 422 on fail
   Security/               — SecurityHeaders, CSRF, Auth (JWT HS256), RBAC,
                             RateLimit, CorsMiddleware — ON by default
-  Cache/                  — in-memory + file drivers only in v1
+  Cache/                  — in-memory + file drivers only in v1 (Cache facade + drivers)
   Test/                   — built-in micro test runner
-  Module/                 — Module interface (§5 module contract)
+  Contracts/              — interfaces + traits (Module, Middleware, Logger, CacheDriver)
+  Controller/             — core controllers (DefaultController)
+  Manifest/               — data-only manifests (Routing aliases, module list)
 modules/                  — development layer (PSR-4, namespace Modules\<Name>\)
   Auth/                   — first module: login + refresh + CORS + users seed
-    AuthModule.php        — module bootstrap class (implements Boneradf\Module\Module)
+    AuthModule.php        — module bootstrap class (implements Boneradf\Contracts\Module)
     src/LoginService.php  — credential check + JWT issuance
     seed.php              — idempotent `users` table + sample user bootstrap
 tests/                    — micro test suite p0–p6

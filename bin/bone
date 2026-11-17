@@ -16,11 +16,7 @@ declare(strict_types=1);
  *   php bin/bone serve [--host=0.0.0.0] [--port=8080]
  */
 
-require dirname(__DIR__) . '/src/Kernel/autoload.php';
-
-use Boneradf\Kernel\Kernel;
-use Boneradf\Router\Router;
-use Boneradf\Middleware\Pipeline;
+require dirname(__DIR__) . '/src/Kernel/Boot.php';
 
 $cmd = $argv[1] ?? 'help';
 
@@ -54,48 +50,45 @@ switch ($cmd) {
 
 function cmdRoutes(): void
 {
-    // ponytail: load routes from public/index.php's route registrations.
-    // For now, instantiate a fresh Kernel (no routes yet → empty list).
-    // Upgrade path: a routes/ file is loaded by the kernel.
-    $router   = new Router();
-    $pipeline = new Pipeline();
-    $kernel   = new Kernel($router, $pipeline);
-
-    $routes = $router->routes();
+    \Boneradf\Kernel\Boot::registerAutoloader();
+    
+    $routes = \Boneradf\Kernel\Boot::routes()->routes();
     if ($routes === []) {
         echo "No routes registered.\n";
         return;
     }
 
-    printf("%-6s %-30s %s\n", 'METHOD', 'PATTERN', 'HANDLER');
-    printf("%-6s %-30s %s\n", '------', '-------', '-------');
+    printf("%-8s %-34s %s\n", 'METHOD', 'PATTERN', 'ALIAS');
+    printf("%-8s %-34s %s\n", '-------', '----------------------------------', '-----');
     foreach ($routes as $route) {
-        $handlerName = (string)(new ReflectionFunction($route->handlerForGroup()));
-        printf("%-6s %-30s %s\n",
+        printf("%-8s %-34s %s\n",
             $route->method(),
             $route->pattern(),
-            substr($handlerName, 0, 60)
+            $route->name()
         );
     }
 }
 
 function cmdModules(): void
 {
-    // ponytail: no module registry yet; list built-in security modules as
-    // "installed" (they ship in-tree, D5).
-    $modules = [
-        ['SecurityHeaders', 'ON'],
-        ['CsrfGuard',       'ON'],
-        ['AuthGuard',       'ON'],
-        ['RbacGuard',       'ON'],
-        ['RateLimiter',     'ON'],
-        ['SignedCookie',    'ON'],
-    ];
+    \Boneradf\Kernel\Boot::registerAutoloader();
 
-    printf("%-20s %s\n", 'MODULE', 'STATUS');
-    printf("%-20s %s\n", '------', '------');
-    foreach ($modules as [$name, $status]) {
-        printf("%-20s %s\n", $name, $status);
+    $list = \Boneradf\Manifest\Modules::list();
+    if ($list === []) {
+        echo "No modules active.\n";
+        return;
+    }
+
+    printf("%-20s %-10s %s\n", 'MODULE', 'ROUTES', 'CLASS');
+    printf("%-20s %-10s %s\n", '------', '------', '-----');
+    foreach ($list as $name) {
+        $file = dirname(__DIR__) . '/modules/' . $name . '/Config/modules.php';
+        $data = is_file($file) ? require $file : [];
+        printf("%-20s %-10s %s\n",
+            $name,
+            !empty($data['routes']) ? 'on' : 'off',
+            $data['class'] ?? '-'
+        );
     }
 }
 

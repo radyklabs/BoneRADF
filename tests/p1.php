@@ -9,14 +9,16 @@ declare(strict_types=1);
  * Exits non-zero on any failure.
  */
 
-require dirname(__DIR__) . '/src/Kernel/autoload.php';
+require dirname(__DIR__) . '/src/Kernel/Boot.php';
+
+Boneradf\Kernel\Boot::withoutModules();
 
 use Boneradf\Kernel\Kernel;
 use Boneradf\Kernel\Request;
 use Boneradf\Kernel\Response;
 use Boneradf\Router\Router;
 use Boneradf\Middleware\Pipeline;
-use Boneradf\Middleware\Middleware;
+use Boneradf\Contracts\Middleware;
 
 $pass = 0;
 $fail = 0;

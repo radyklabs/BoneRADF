@@ -5,3 +5,6 @@
 /docs/CONFIG.md
 
 /sample_frontdev
+
+# Scratch front controller (testing bootstrap logic; index.php stays the gate)
+/public/test.php

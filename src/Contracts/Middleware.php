@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Boneradf\Middleware;
+namespace Boneradf\Contracts;
 
 use Boneradf\Kernel\Request;
 use Boneradf\Kernel\Response;

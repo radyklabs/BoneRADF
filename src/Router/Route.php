@@ -57,36 +57,115 @@ final class Route
     }
 
     /**
+     * Typed segment types: name => regex body.
+     * Custom regex is allowed via `{name:/regex/}`.
+     */
+    private const PARAM_TYPES = [
+        'int'  => '[0-9]+',
+        'num'  => '[0-9]+(?:\.[0-9]+)?',
+        'slug' => '[a-z0-9-]+',
+        'uuid' => '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}',
+        'any'  => '[^/]+',
+    ];
+
+    /**
      * Extract parameter names from the pattern.
+     *
+     * Supports both `{name}` / `{name:type}` and legacy `:name`.
      *
      * @return string[]
      */
     public function paramNames(): array
     {
-        preg_match_all('/:(\w+)/', $this->pattern, $m);
-        return $m[1];
+        preg_match_all('/\{(\w+)(?::[^}]+)?\}|:(\w+)/', $this->pattern, $m);
+        return array_values (array_filter (array_merge ($m[1], $m[2])));
     }
 
     /**
      * Match a concrete path against this route's pattern.
      *
+     * Placeholders:
+     *   {name}          → any non-slash segment
+     *   {name:type}     → typed segment (see PARAM_TYPES)
+     *   {name:/regex/}  → custom regex (delimiter-agnostic wrapper `/…/`)
+     *
+     * Legacy `:name` syntax is still matched as untyped.
+     *
      * @return array<string, string>|null  params, or null if no match
      */
     public function match(string $path): ?array
     {
-        // deviation: use ~ as delimiter instead of / to avoid collision with path slashes
-        $regex = '~^' . preg_replace('/:(\w+)/', '(?P<$1>[^/]+)', $this->pattern) . '$~';
+        $regex = $this->compileRegex ();
+        if ($regex === null) {
+            return null;
+        }
 
-        if (preg_match($regex, $path, $matches)) {
+        if (preg_match ($regex, $path, $matches)) {
             $params = [];
             foreach ($matches as $key => $value) {
-                if (is_string($key)) {
+                if (is_string ($key)) {
                     $params[$key] = $value;
                 }
             }
             return $params;
         }
         return null;
+    }
+
+    /**
+     * Compile the pattern to a PCRE regex. Returns null for invalid patterns.
+     *
+     * @return string|null
+     */
+    private function compileRegex (): ?string
+    {
+        $pattern = $this->pattern;
+        $names   = [];
+
+        // Custom regex: {name:/body/} — capture inner body (no nested slashes issue).
+        $pattern = preg_replace_callback (
+            '/\{(\w+):\/([^\/]+)\/\}/',
+            function (array $m) use (&$names): string {
+                $names[] = $m[1];
+                return '(?P<' . $m[1] . '>' . $m[2] . ')';
+            },
+            $pattern
+        ) ?? $pattern;
+
+        // Typed + untyped: {name:type} or {name}
+        $pattern = preg_replace_callback (
+            '/\{(\w+)(?::(\w+))?\}/',
+            function (array $m) use (&$names): string {
+                $name = $m[1];
+                $type = $m[2] ?? 'any';
+                if (!isset (self::PARAM_TYPES[$type])) {
+                    return '(?P<' . $name . '>[^/]+)';
+                }
+                $names[] = $name;
+                return '(?P<' . $name . '>' . self::PARAM_TYPES[$type] . ')';
+            },
+            $pattern
+        ) ?? $pattern;
+
+        // Legacy colon syntax: :name
+        $pattern = preg_replace_callback (
+            '/:(\w+)/',
+            function (array $m) use (&$names): string {
+                $names[] = $m[1];
+                return '(?P<' . $m[1] . '>[^/]+)';
+            },
+            $pattern
+        ) ?? $pattern;
+
+        // Escape anything left that PCRE would treat as a metacharacter,
+        // preserving the already-inserted (?P<...>…) groups.
+        $regex = '~^' . $pattern . '$~';
+
+        if (@preg_match ($regex, '') === false) {
+            return null;
+        }
+
+        return $regex;
     }
 
     /**

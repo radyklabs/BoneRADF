@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Boneradf\Module;
+namespace Boneradf\Contracts;
 
 use Boneradf\Container\Container;
 use Boneradf\Middleware\Pipeline;

@@ -13,7 +13,7 @@ declare(strict_types=1);
  * Run:  php -d extension=pdo_mysql modules/Resources/seed.php
  */
 
-require dirname(__DIR__, 2) . '/src/Kernel/autoload.php';
+require dirname(__DIR__, 2) . '/src/Kernel/Boot.php';
 
 use Boneradf\Database\ConnectionFactory;
 

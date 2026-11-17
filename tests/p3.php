@@ -12,7 +12,9 @@ declare(strict_types=1);
  * is tested via a mock PDO that records prepared SQL and params.
  */
 
-require dirname(__DIR__) . '/src/Kernel/autoload.php';
+require dirname(__DIR__) . '/src/Kernel/Boot.php';
+
+Boneradf\Kernel\Boot::withoutModules();
 
 use Boneradf\Database\QueryBuilder;
 use Boneradf\Validator\Validator;
