@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Boneradf\Security;
 
-use Boneradf\Kernel\Request;
-use Boneradf\Kernel\Response;
+// use Boneradf\Kernel\Request;
+// use Boneradf\Kernel\Response;
 
 /**
  * Signed cookie helper — HMAC-SHA256 signed values.
