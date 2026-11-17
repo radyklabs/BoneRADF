@@ -97,6 +97,11 @@ final class Boot
      */
     public static function autoload (string $class): void
     {
+        // CLI (bin/bone) memanggil registerAutoloader() tanpa init() —
+        // inisialisasi basepath di sini menjamin jalur autoload mana pun aman.
+        if (self::$basepath === '') {
+            self::$basepath = dirname(__DIR__, 2);
+        }
         require_once self::$basepath . '/.supports';
 
         if (!defined ('sep'))

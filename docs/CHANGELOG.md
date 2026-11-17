@@ -106,6 +106,15 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - `src/Kernel/autoload.php` — replaced by `Boot::autoload()` (one source of
   truth, class-based). All 11 entry points updated in the same change.
 
+### Fixed
+
+- **`bone routes` / `bone modules` fatal (`require /.supports`)**: CLI calls
+  `Boot::registerAutoloader()` directly without `init()`, so `Boot::$basepath`
+  was still `''` when `autoload()` ran. `autoload()` now derives `basepath`
+  from `__DIR__` on first use — every autoload path is safe without booting
+  the kernel. Failing-before (fatal) → passing-after: 14 routes, 2 modules,
+  p0–p6 166/166.
+
 - **Module system (ARCHITECTURE §5, planned → implemented)**: `src/Module/Module.php`
   (`boot(Container, Router, Pipeline)` interface) + module-aware autoloader
   (`Boneradf\*` → `src/`, `Modules\*` → `modules/<Name>/src/` and
