@@ -35,69 +35,75 @@ final class Kernel
     private ?Config $config;
     private ?Logger $logger;
 
-    public function __construct(
+    public function __construct (
         ?Router $router = null,
         ?Pipeline $pipeline = null,
         ?Container $container = null,
         ?Config $config = null,
         ?Logger $logger = null,
     ) {
-        $this->router    = $router ?? new Router();
-        $this->pipeline  = $pipeline ?? new Pipeline();
+        $this->router    = $router ?? new Router ();
+        $this->pipeline  = $pipeline ?? new Pipeline ();
         $this->container = $container;
         $this->config    = $config;
         $this->logger    = $logger;
     }
 
-    public function router(): Router
+    public function router (): Router
     {
         return $this->router;
     }
 
-    public function pipeline(): Pipeline
+    public function pipeline (): Pipeline
     {
         return $this->pipeline;
     }
 
-    public function container(): ?Container
+    public function container (): ?Container
     {
         return $this->container;
     }
 
-    public function config(): ?Config
+    public function config (): ?Config
     {
         return $this->config;
     }
 
-    public function logger(): ?Logger
+    public function logger (): ?Logger
     {
         return $this->logger;
     }
 
-    public function handle(Request $request): Response
+    public function handle (Request $request): Response
     {
-        try {
-            return $this->dispatch($request);
-        } catch (Throwable $e) {
-            $this->logger?->error('unhandled_exception', [
-                'exception' => $e->getMessage(),
-                'path'      => $request->path(),
+        try
+        {
+            return $this->dispatch ($request);
+        }
+        catch (Throwable $e)
+        {
+            $this->logger?->error ('unhandled_exception', [
+                'exception' => $e->getMessage (),
+                'path'      => $request->path (),
             ]);
 
-            $message = self::PRODUCTION ? 'Internal server error.' : $e->getMessage();
-            return Response::error('INTERNAL_ERROR', $message, 500);
+            $message = self::PRODUCTION ? 'Internal server error.' : $e->getMessage ();
+            return Response::error ('INTERNAL_ERROR', $message, 500);
         }
     }
 
-    private function dispatch(Request $request): Response
+    private function dispatch (Request $request): Response
     {
-        $match = $this->router->match($request);
+        $match = $this->router->match ($request);
 
-        if ($match === null) {
-            if ($this->router->pathExists($request->path())) {
-                return Response::error('METHOD_NOT_ALLOWED', 'Method not allowed for this path.', 405);
+        if ($match === null)
+        {
+            if ($this->router->pathExists ($request->path ()))
+            {
+                return Response::error ('METHOD_NOT_ALLOWED', 'Method not allowed for this path.', 405);
             }
-            return Response::error('NOT_FOUND', 'Route not found.', 404);
+
+            return Response::error ('NOT_FOUND', 'Route not found.', 404);
         }
 
         /** @var \Boneradf\Router\Route $route */
@@ -106,15 +112,17 @@ final class Kernel
 
         // Resolve route-specific middleware
         $pipeline = $this->pipeline;
-        foreach ($route->middleware() as $name) {
-            $mw = $this->router->getMiddleware($name);
-            if ($mw !== null) {
-                $pipeline->add($mw);
+        foreach ($route->middleware () as $name)
+        {
+            $mw = $this->router->getMiddleware ($name);
+            if ($mw !== null)
+            {
+                $pipeline->add ($mw);
             }
         }
 
-        $endpoint = fn (Request $req): Response => $route->invoke($req, $params);
+        $endpoint = fn (Request $req): Response => $route->invoke ($req, $params);
 
-        return $pipeline->run($request, $endpoint);
+        return $pipeline->run ($request, $endpoint);
     }
 }

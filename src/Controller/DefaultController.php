@@ -12,9 +12,10 @@ final class DefaultController
 {
     public function index (Request $req, array $params): Response
     {
-        return Response::json ([
-            'success' => ['code' => 200, 'message' => 'Welcome to PHP Headless Framework by RADLabs Studio!'],
-        ]);
+        // return Response::json ([
+        //     'success' => ['code' => 200, 'message' => 'Welcome to PHP Headless Framework by RADLabs Studio!'],
+        // ]);
+        return Response::view('landing');
     }
 
     public function health (Request $req, array $params): Response

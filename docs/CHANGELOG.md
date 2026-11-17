@@ -114,6 +114,19 @@ Versions follow [Semantic Versioning](https://semver.org/).
   remains the default envelope. Sample view `src/Views/landing.php`.
   `tests/p0.php` +6 (html pass-through, view render, traversal reject,
   missing view); suite p0–p8 207/207.
+- **Codebase reformat sweep**: 33 `src/` files normalized to the project
+  brace style (`)` on its own line, house helpers `call_user_func`/`define`
+  captured, docblock `@return` shapes clarified). No behavior change — suite
+  p0–p8 still 207/207.
+- **Review + hardening plan (P9.5)**: `docs/REVIEW-2026-11-17-v2.md`
+  (world-class review, module-developer POV, 4 factual corrections to the
+  prior draft) + `docs/PLAN-P9.5.md` (P9.5.1–P9.5.8 task plan, G1–G8 gate,
+  user decisions locked 2026-11-17: generator now, Config wired + DB
+  fail-closed, DB-availability activation, `find()` queue-respecting, RBAC
+  wired, minor cleanup, exclude `modules/Test`).
+- **`modules/Test/` + `public/assets/css/style.css`** — new WIP module
+  (`Manifest.php` bootstrap, `Controllers/TestController`) + landing
+  stylesheet.
 
 ### Changed
 

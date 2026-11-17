@@ -21,5 +21,5 @@ interface Middleware
      * @param callable $next  fn(Request): Response — advances the pipeline
      * @return Response
      */
-    public function handle(Request $req, callable $next): Response;
+    public function handle (Request $req, callable $next): Response;
 }

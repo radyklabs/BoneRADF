@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Boneradf\Router;
 
+use Boneradf\Kernel\Response;
 /**
  * A single registered route.
  */
@@ -16,7 +17,7 @@ final class Route
      * @param string[]    $middleware   Route-specific middleware names
      * @param string      $name         Optional route name
      */
-    public function __construct(
+    public function __construct (
         private readonly string $method,
         private readonly string $pattern,
         private $handler,
@@ -27,23 +28,23 @@ final class Route
         // — the constructor param is callable-typed, so this is safe at runtime.
     }
 
-    public function method(): string
+    public function method (): string
     {
         return $this->method;
     }
 
-    public function pattern(): string
+    public function pattern (): string
     {
         return $this->pattern;
     }
 
     /** @return string[] */
-    public function middleware(): array
+    public function middleware (): array
     {
         return $this->middleware;
     }
 
-    public function name(): string
+    public function name (): string
     {
         return $this->name;
     }
@@ -51,7 +52,7 @@ final class Route
     /**
      * Handler callable (used by group re-registration).
      */
-    public function handlerForGroup(): callable
+    public function handlerForGroup (): callable
     {
         return $this->handler;
     }
@@ -75,9 +76,9 @@ final class Route
      *
      * @return string[]
      */
-    public function paramNames(): array
+    public function paramNames (): array
     {
-        preg_match_all('/\{(\w+)(?::[^}]+)?\}|:(\w+)/', $this->pattern, $m);
+        preg_match_all ('/\{(\w+)(?::[^}]+)?\}|:(\w+)/', $this->pattern, $m);
         return array_values (array_filter (array_merge ($m[1], $m[2])));
     }
 
@@ -93,17 +94,21 @@ final class Route
      *
      * @return array<string, string>|null  params, or null if no match
      */
-    public function match(string $path): ?array
+    public function match (string $path): ?array
     {
         $regex = $this->compileRegex ();
-        if ($regex === null) {
+        if ($regex === null)
+        {
             return null;
         }
 
-        if (preg_match ($regex, $path, $matches)) {
+        if (preg_match ($regex, $path, $matches))
+        {
             $params = [];
-            foreach ($matches as $key => $value) {
-                if (is_string ($key)) {
+            foreach ($matches as $key => $value)
+            {
+                if (is_string ($key))
+                {
                     $params[$key] = $value;
                 }
             }
@@ -125,7 +130,8 @@ final class Route
         // Custom regex: {name:/body/} — capture inner body (no nested slashes issue).
         $pattern = preg_replace_callback (
             '/\{(\w+):\/([^\/]+)\/\}/',
-            function (array $m) use (&$names): string {
+            function (array $m) use (&$names): string
+            {
                 $names[] = $m[1];
                 return '(?P<' . $m[1] . '>' . $m[2] . ')';
             },
@@ -135,7 +141,8 @@ final class Route
         // Typed + untyped: {name:type} or {name}
         $pattern = preg_replace_callback (
             '/\{(\w+)(?::(\w+))?\}/',
-            function (array $m) use (&$names): string {
+            function (array $m) use (&$names): string
+            {
                 $name = $m[1];
                 $type = $m[2] ?? 'any';
                 if (!isset (self::PARAM_TYPES[$type])) {
@@ -150,7 +157,8 @@ final class Route
         // Legacy colon syntax: :name
         $pattern = preg_replace_callback (
             '/:(\w+)/',
-            function (array $m) use (&$names): string {
+            function (array $m) use (&$names): string
+            {
                 $names[] = $m[1];
                 return '(?P<' . $m[1] . '>[^/]+)';
             },
@@ -161,7 +169,8 @@ final class Route
         // preserving the already-inserted (?P<...>…) groups.
         $regex = '~^' . $pattern . '$~';
 
-        if (@preg_match ($regex, '') === false) {
+        if (@preg_match ($regex, '') === false)
+        {
             return null;
         }
 
@@ -173,14 +182,15 @@ final class Route
      *
      * @param object $request
      * @param array<string, string> $params
-     * @return \Boneradf\Kernel\Response
+     * @return Response
      */
-    public function invoke(object $request, array $params): \Boneradf\Kernel\Response
+    public function invoke(object $request, array $params): Response
     {
-        $result = ($this->handler)($request, $params);
-        if ($result instanceof \Boneradf\Kernel\Response) {
+        $result = ($this->handler) ($request, $params);
+        if ($result instanceof Response)
+        {
             return $result;
         }
-        return \Boneradf\Kernel\Response::json($result);
+        return Response::json ($result);
     }
 }

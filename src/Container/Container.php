@@ -29,10 +29,10 @@ final class Container
      * @param string   $id      Binding key (class name, interface, or arbitrary string)
      * @param callable $factory  fn(Container $c): object
      */
-    public function bind(string $id, callable $factory): void
+    public function bind (string $id, callable $factory): void
     {
         $this->bindings[$id] = $factory;
-        unset($this->instances[$id]);
+        unset ($this->instances[$id]);
     }
 
     /**
@@ -41,7 +41,7 @@ final class Container
      * @param string $id
      * @param object $instance
      */
-    public function instance(string $id, object $instance): void
+    public function instance (string $id, object $instance): void
     {
         $this->instances[$id] = $instance;
     }
@@ -49,9 +49,9 @@ final class Container
     /**
      * Check if an id is bound (factory or instance).
      */
-    public function has(string $id): bool
+    public function has (string $id): bool
     {
-        return isset($this->bindings[$id]) || isset($this->instances[$id]);
+        return isset ($this->bindings[$id]) || isset ($this->instances[$id]);
     }
 
     /**
@@ -59,30 +59,37 @@ final class Container
      *
      * @throws RuntimeException if unbound or circular
      */
-    public function get(string $id): object
+    public function get (string $id): object
     {
         // Already resolved — return cached instance
-        if (isset($this->instances[$id])) {
+        if (isset ($this->instances[$id]))
+        {
             return $this->instances[$id];
         }
 
         // No factory and no instance → fail
-        if (!isset($this->bindings[$id])) {
-            throw new RuntimeException("Container: no binding for '{$id}'.");
+        if (!isset ($this->bindings[$id]))
+        {
+            throw new RuntimeException ("Container: no binding for '{$id}'.");
         }
 
         // Circular detection
-        if (isset($this->resolving[$id])) {
-            throw new RuntimeException("Container: circular dependency detected for '{$id}'.");
+        if (isset($this->resolving[$id]))
+        {
+            throw new RuntimeException ("Container: circular dependency detected for '{$id}'.");
         }
 
         $this->resolving[$id] = true;
-        try {
+
+        try
+        {
             $instance = ($this->bindings[$id])($this);
             $this->instances[$id] = $instance;
             return $instance;
-        } finally {
-            unset($this->resolving[$id]);
+        }
+        finally
+        {
+            unset ($this->resolving[$id]);
         }
     }
 
@@ -91,8 +98,8 @@ final class Container
      *
      * @return string[]
      */
-    public function keys(): array
+    public function keys (): array
     {
-        return array_unique(array_merge(array_keys($this->bindings), array_keys($this->instances)));
+        return array_unique (array_merge (array_keys ($this->bindings), array_keys ($this->instances)));
     }
 }

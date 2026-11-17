@@ -148,10 +148,12 @@ final class Boot
         {
             [$method, $pattern] = self::splitAlias ($alias);
             $key = $method . ' ' . $pattern;
+
             if (isset ($seen[$key]))
             {
                 throw new RuntimeException ("Boot: duplicate route alias '{$alias}'.");
             }
+            
             $seen[$key] = true;
             $router->add ($method, $pattern, self::handler ($handler, $container), [], $alias);
         }
@@ -187,12 +189,13 @@ final class Boot
     }
 
     /**
-     * @return array{0: string, 1: string}
+     * @return array{0: string ProtocolMethod, 1: string UriSegments}
      */
     private static function splitAlias (string $alias): array
     {
         $parts = preg_split ('/\s+/', trim ($alias), 2);
-        if (is_array ($parts) && count ($parts) === 2 && $parts[0] !== '' && $parts[1] !== '') {
+        if (is_array ($parts) && count ($parts) === 2 && $parts[0] !== '' && $parts[1] !== '')
+        {
             return [strtoupper ($parts[0]), $parts[1]];
         }
         throw new RuntimeException ("Boot: invalid route alias '{$alias}'.");

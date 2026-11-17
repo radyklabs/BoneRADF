@@ -21,7 +21,7 @@ final class Pipeline
     /** @var Middleware[] */
     private array $middlewares = [];
 
-    public function add(Middleware $mw): void
+    public function add (Middleware $mw): void
     {
         $this->middlewares[] = $mw;
     }
@@ -29,7 +29,7 @@ final class Pipeline
     /**
      * @return Middleware[]
      */
-    public function all(): array
+    public function all (): array
     {
         return $this->middlewares;
     }
@@ -41,15 +41,18 @@ final class Pipeline
      * @param callable $endpoint  fn(Request): Response — the innermost handler
      * @return Response
      */
-    public function run(Request $req, callable $endpoint): Response
+    public function run (Request $req, callable $endpoint): Response
     {
         // Build the chain from innermost to outermost.
         $handler = $endpoint;
-        for ($i = count($this->middlewares) - 1; $i >= 0; $i--) {
+        
+        for ($i = count ($this->middlewares) - 1; $i >= 0; $i--)
+        {
             $mw = $this->middlewares[$i];
             $next = $handler;
-            $handler = fn (Request $r): Response => $mw->handle($r, $next);
+            $handler = fn (Request $r): Response => $mw->handle ($r, $next);
         }
-        return $handler($req);
+
+        return $handler ($req);
     }
 }

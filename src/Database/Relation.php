@@ -30,7 +30,7 @@ final class Relation
      * @param string      $ownerKey   see class doc
      * @param string|null $pivot      belongsToMany pivot table only
      */
-    public function __construct(
+    public function __construct (
         public readonly string $type,
         public readonly string $related,
         public readonly string $foreignKey,
@@ -38,11 +38,14 @@ final class Relation
         public readonly string $ownerKey = '',
         public readonly ?string $pivot = null,
     ) {
-        if (!in_array($type, [self::HAS_ONE, self::HAS_MANY, self::BELONGS_TO, self::BELONGS_TO_MANY], true)) {
+        if (!in_array ($type, [self::HAS_ONE, self::HAS_MANY, self::BELONGS_TO, self::BELONGS_TO_MANY], true))
+        {
             throw new RuntimeException("Relation: unknown type '{$type}'");
         }
-        if ($type === self::BELONGS_TO_MANY && ($pivot === null || $pivot === '')) {
-            throw new RuntimeException('Relation: belongsToMany requires a pivot table.');
+
+        if ($type === self::BELONGS_TO_MANY && ($pivot === null || $pivot === ''))
+        {
+            throw new RuntimeException ('Relation: belongsToMany requires a pivot table.');
         }
     }
 }

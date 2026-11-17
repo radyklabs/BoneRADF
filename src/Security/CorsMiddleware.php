@@ -25,29 +25,31 @@ final class CorsMiddleware implements Middleware
     private array $allowedOrigins;
 
     /** @param string[] $allowedOrigins  e.g. ['http://localhost:4173', 'http://127.0.0.1:4173'] */
-    public function __construct(array $allowedOrigins = [])
+    public function __construct (array $allowedOrigins = [])
     {
         $this->allowedOrigins = $allowedOrigins;
     }
 
-    public function handle(Request $req, callable $next): Response
+    public function handle (Request $req, callable $next): Response
     {
-        $resp = $next($req);
+        $resp = $next ($req);
 
-        $origin = $req->header('Origin');
-        if ($origin === null || !in_array($origin, $this->allowedOrigins, true)) {
+        $origin = $req->header ('Origin');
+        if ($origin === null || !in_array($origin, $this->allowedOrigins, true))
+        {
             return $resp;
         }
 
         $resp = $resp
-            ->withHeader('Access-Control-Allow-Origin', $origin)
-            ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
-            ->withHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-CSRF-Token')
-            ->withHeader('Access-Control-Max-Age', '86400');
+            ->withHeader ('Access-Control-Allow-Origin', $origin)
+            ->withHeader ('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+            ->withHeader ('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-CSRF-Token')
+            ->withHeader ('Access-Control-Max-Age', '86400');
 
         // Preflight: short-circuit with 204 + the CORS headers above.
-        if (strtoupper($req->method()) === 'OPTIONS') {
-            return $resp->withHeader('Content-Length', '0');
+        if (strtoupper ($req->method ()) === 'OPTIONS')
+        {
+            return $resp->withHeader ('Content-Length', '0');
         }
 
         return $resp;
@@ -56,7 +58,7 @@ final class CorsMiddleware implements Middleware
     /**
      * @return string[]
      */
-    public function allowedOrigins(): array
+    public function allowedOrigins (): array
     {
         return $this->allowedOrigins;
     }

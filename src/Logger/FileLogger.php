@@ -19,39 +19,40 @@ final class FileLogger implements Logger
     private string $path;
     private string $channel;
 
-    public function __construct(string $path, string $channel = 'boneradf')
+    public function __construct (string $path, string $channel = 'boneradf')
     {
         $this->path = $path;
         $this->channel = $channel;
 
         // Ensure directory exists
-        $dir = dirname($path);
-        if (!is_dir($dir)) {
-            @mkdir($dir, 0755, true);
+        $dir = dirname ($path);
+        if (!is_dir ($dir))
+        {
+            @mkdir ($dir, 0755, true);
         }
     }
 
-    public function debug(string $message, array $context = []): void
+    public function debug (string $message, array $context = []): void
     {
-        $this->log('debug', $message, $context);
+        $this->log ('debug', $message, $context);
     }
 
-    public function info(string $message, array $context = []): void
+    public function info (string $message, array $context = []): void
     {
-        $this->log('info', $message, $context);
+        $this->log ('info', $message, $context);
     }
 
-    public function warning(string $message, array $context = []): void
+    public function warning (string $message, array $context = []): void
     {
-        $this->log('warning', $message, $context);
+        $this->log ('warning', $message, $context);
     }
 
-    public function error(string $message, array $context = []): void
+    public function error (string $message, array $context = []): void
     {
-        $this->log('error', $message, $context);
+        $this->log ('error', $message, $context);
     }
 
-    public function log(string $level, string $message, array $context = []): void
+    public function log (string $level, string $message, array $context = []): void
     {
         $entry = [
             'ts'         => date('c'),
@@ -62,10 +63,10 @@ final class FileLogger implements Logger
         ];
 
         // Redact potential secrets before writing
-        $entry = $this->redact($entry);
+        $entry = $this->redact ($entry);
 
-        $line = json_encode($entry, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
-        file_put_contents($this->path, $line . "\n", FILE_APPEND | LOCK_EX);
+        $line = json_encode ($entry, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        file_put_contents ($this->path, $line . "\n", FILE_APPEND | LOCK_EX);
     }
 
     /**
@@ -74,28 +75,34 @@ final class FileLogger implements Logger
      * @param array<string, mixed> $entry
      * @return array<string, mixed>
      */
-    private function redact(array $entry): array
+    private function redact (array $entry): array
     {
         $sensitive = ['secret', 'token', 'password', 'key', 'dsn', 'credential'];
 
-        foreach ($entry as $k => $v) {
-            if (is_array($v)) {
-                foreach ($v as $sk => $sv) {
-                    foreach ($sensitive as $s) {
-                        if (stripos((string)$sk, $s) !== false) {
+        foreach ($entry as $k => $v)
+        {
+            if (is_array ($v))
+            {
+                foreach ($v as $sk => $sv)
+                {
+                    foreach ($sensitive as $s)
+                    {
+                        if (stripos ((string) $sk, $s) !== false)
+                        {
                             $entry[$k][$sk] = '[REDACTED]';
                         }
                     }
                 }
             }
         }
+
         return $entry;
     }
 
     /**
      * Get the log file path (useful for tests).
      */
-    public function path(): string
+    public function path (): string
     {
         return $this->path;
     }

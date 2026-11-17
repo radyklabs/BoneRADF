@@ -23,7 +23,7 @@ interface Module
     /**
      * Unique module name (used for registry + `bone modules`).
      */
-    public function name(): string;
+    public function name (): string;
 
     /**
      * Called at boot, after core security middleware is registered.
@@ -32,5 +32,5 @@ interface Module
      * @param Router    $router     register routes
      * @param Pipeline  $pipeline   register middleware
      */
-    public function boot(Container $container, Router $router, Pipeline $pipeline): void;
+    public function boot (Container $container, Router $router, Pipeline $pipeline): void;
 }

@@ -12,17 +12,17 @@ final class ValidationResult
     /** @var array<string, string[]> field => [errors] */
     private array $errors;
 
-    public function __construct(array $errors = [])
+    public function __construct (array $errors = [])
     {
         $this->errors = $errors;
     }
 
-    public function passes(): bool
+    public function passes (): bool
     {
         return $this->errors === [];
     }
 
-    public function fails(): bool
+    public function fails (): bool
     {
         return $this->errors !== [];
     }
@@ -30,7 +30,7 @@ final class ValidationResult
     /**
      * @return array<string, string[]>
      */
-    public function errors(): array
+    public function errors (): array
     {
         return $this->errors;
     }
@@ -40,7 +40,7 @@ final class ValidationResult
      *
      * @return string[]|null
      */
-    public function fieldErrors(string $field): ?array
+    public function fieldErrors (string $field): ?array
     {
         return $this->errors[$field] ?? null;
     }

@@ -26,37 +26,40 @@ final class RbacGuard implements Middleware
      * @param array<string, string[]> $roleMap  role => [permissions]
      * @param string|null             $required Permission required for this route
      */
-    public function __construct(array $roleMap, ?string $required = null)
+    public function __construct (array $roleMap, ?string $required = null)
     {
         $this->roleMap = $roleMap;
         $this->requiredPermission = $required;
     }
 
-    public function handle(Request $req, callable $next): Response
+    public function handle (Request $req, callable $next): Response
     {
-        if ($this->requiredPermission === null) {
-            return Response::error('FORBIDDEN', 'No permission declared for this route.', 403);
+        if ($this->requiredPermission === null)
+        {
+            return Response::error ('FORBIDDEN', 'No permission declared for this route.', 403);
         }
 
-        $user = $req->user();
-        if ($user === null) {
-            return Response::error('UNAUTHENTICATED', 'Authentication required.', 401);
+        $user = $req->user ();
+        if ($user === null)
+        {
+            return Response::error ('UNAUTHENTICATED', 'Authentication required.', 401);
         }
 
-        $role = (string)($user['role'] ?? '');
+        $role = (string) ($user['role'] ?? '');
         $permissions = $this->roleMap[$role] ?? [];
 
-        if (!in_array($this->requiredPermission, $permissions, true)) {
-            return Response::error('FORBIDDEN', 'Insufficient permissions.', 403);
+        if (!in_array ($this->requiredPermission, $permissions, true))
+        {
+            return Response::error ('FORBIDDEN', 'Insufficient permissions.', 403);
         }
 
-        return $next($req);
+        return $next ($req);
     }
 
-    public static function fromMiddlewareName(string $name, array $roleMap): self
+    public static function fromMiddlewareName (string $name, array $roleMap): self
     {
         // name format: rbac:users.create
-        $perm = str_starts_with($name, 'rbac:') ? substr($name, 5) : null;
-        return new self($roleMap, $perm);
+        $perm = str_starts_with ($name, 'rbac:') ? substr ($name, 5) : null;
+        return new self ($roleMap, $perm);
     }
 }

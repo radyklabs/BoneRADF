@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Boneradf\Database;
 
 use PDO;
+use PDOException;
 use RuntimeException;
 
 /**
@@ -25,7 +26,7 @@ final class ConnectionFactory
     /**
      * @param array<int, mixed> $options PDO constants (e.g. [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION])
      */
-    public function __construct(string $dsn, string $user = '', string $pass = '', array $options = [])
+    public function __construct (string $dsn, string $user = '', string $pass = '', array $options = [])
     {
         $this->dsn = $dsn;
         $this->user = $user;
@@ -42,16 +43,19 @@ final class ConnectionFactory
      *
      * @throws RuntimeException on connection failure
      */
-    public function connect(): PDO
+    public function connect (): PDO
     {
-        try {
-            return new PDO($this->dsn, $this->user, $this->pass, $this->options);
-        } catch (PDOException $e) {
-            throw new RuntimeException('DB connection failed: ' . $e->getMessage(), (int)$e->getCode(), $e);
+        try
+        {
+            return new PDO ($this->dsn, $this->user, $this->pass, $this->options);
+        }
+        catch (PDOException $e)
+        {
+            throw new RuntimeException ('DB connection failed: ' . $e->getMessage (), (int) $e->getCode (), $e);
         }
     }
 
-    public function dsn(): string
+    public function dsn (): string
     {
         return $this->dsn;
     }

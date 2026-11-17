@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Boneradf\Router;
 
 use Boneradf\Kernel\Request;
-use Boneradf\Kernel\Response;
+// use Boneradf\Kernel\Response;
 use Boneradf\Contracts\Middleware;
 
 /**
@@ -28,7 +28,7 @@ final class Router
     /**
      * Register a middleware class under a name so routes can reference it.
      */
-    public function registerMiddleware(string $name, Middleware $mw): void
+    public function registerMiddleware (string $name, Middleware $mw): void
     {
         $this->middlewareByName[$name] = $mw;
     }
@@ -42,36 +42,36 @@ final class Router
      * @param string[] $middleware Route-specific middleware names
      * @param string   $name       Route name (alias source string)
      */
-    public function add(string $method, string $pattern, callable $handler, array $middleware = [], string $name = ''): Route
+    public function add (string $method, string $pattern, callable $handler, array $middleware = [], string $name = ''): Route
     {
-        $route = new Route(strtoupper($method), $pattern, $handler, $middleware, $name);
+        $route = new Route (strtoupper ($method), $pattern, $handler, $middleware, $name);
         $this->routes[] = $route;
         return $route;
     }
 
-    public function get(string $pattern, callable $handler, array $middleware = []): Route
+    public function get (string $pattern, callable $handler, array $middleware = []): Route
     {
-        return $this->add('GET', $pattern, $handler, $middleware);
+        return $this->add ('GET', $pattern, $handler, $middleware);
     }
 
-    public function post(string $pattern, callable $handler, array $middleware = []): Route
+    public function post (string $pattern, callable $handler, array $middleware = []): Route
     {
-        return $this->add('POST', $pattern, $handler, $middleware);
+        return $this->add ('POST', $pattern, $handler, $middleware);
     }
 
-    public function put(string $pattern, callable $handler, array $middleware = []): Route
+    public function put (string $pattern, callable $handler, array $middleware = []): Route
     {
-        return $this->add('PUT', $pattern, $handler, $middleware);
+        return $this->add ('PUT', $pattern, $handler, $middleware);
     }
 
-    public function patch(string $pattern, callable $handler, array $middleware = []): Route
+    public function patch (string $pattern, callable $handler, array $middleware = []): Route
     {
-        return $this->add('PATCH', $pattern, $handler, $middleware);
+        return $this->add ('PATCH', $pattern, $handler, $middleware);
     }
 
-    public function delete(string $pattern, callable $handler, array $middleware = []): Route
+    public function delete (string $pattern, callable $handler, array $middleware = []): Route
     {
-        return $this->add('DELETE', $pattern, $handler, $middleware);
+        return $this->add ('DELETE', $pattern, $handler, $middleware);
     }
 
     /**
@@ -87,28 +87,29 @@ final class Router
      * @param callable $fn          fn(Router $r) — registers routes inside
      * @param string   $urlPrefix   URL prefix prepended to `$prefix` (default `/api`)
      */
-    public function group(string $prefix, callable $fn, string $urlPrefix = self::DEFAULT_URL_PREFIX): void
+    public function group (string $prefix, callable $fn, string $urlPrefix = self::DEFAULT_URL_PREFIX): void
     {
         $inner = new self();
         $fn($inner);
         $fullPrefix = $urlPrefix . $prefix;
-        foreach ($inner->routes as $route) {
-            $prefixed = $fullPrefix . $route->pattern();
+        foreach ($inner->routes as $route)
+        {
+            $prefixed = $fullPrefix . $route->pattern ();
             $this->routes[] = new Route(
-                $route->method(),
+                $route->method (),
                 $prefixed,
-                $route->handlerForGroup(),
-                $route->middleware(),
-                $route->name(),
+                $route->handlerForGroup (),
+                $route->middleware (),
+                $route->name (),
             );
         }
-        $this->middlewareByName = array_merge($this->middlewareByName, $inner->middlewareByName);
+        $this->middlewareByName = array_merge ($this->middlewareByName, $inner->middlewareByName);
     }
 
     /**
      * @return Route[]
      */
-    public function routes(): array
+    public function routes (): array
     {
         return $this->routes;
     }
@@ -118,17 +119,21 @@ final class Router
      *
      * @return array{route: Route, params: array<string,string>}|null
      */
-    public function match(Request $req): ?array
+    public function match (Request $req): ?array
     {
-        $method = strtoupper($req->method());
-        $path = $req->path();
+        $method = strtoupper ($req->method ());
+        $path = $req->path ();
 
-        foreach ($this->routes as $route) {
-            if (strtoupper($route->method()) !== $method) {
+        foreach ($this->routes as $route)
+        {
+            if (strtoupper ($route->method ()) !== $method)
+            {
                 continue;
             }
-            $params = $route->match($path);
-            if ($params !== null) {
+
+            $params = $route->match ($path);
+            if ($params !== null)
+            {
                 return ['route' => $route, 'params' => $params];
             }
         }
@@ -139,20 +144,23 @@ final class Router
     /**
      * Check if any route matches the path (regardless of method) — for 405 detection.
      */
-    public function pathExists(string $path): bool
+    public function pathExists (string $path): bool
     {
-        foreach ($this->routes as $route) {
-            if ($route->match($path) !== null) {
+        foreach ($this->routes as $route)
+        {
+            if ($route->match ($path) !== null)
+            {
                 return true;
             }
         }
+
         return false;
     }
 
     /**
      * Get registered middleware by name.
      */
-    public function getMiddleware(string $name): ?Middleware
+    public function getMiddleware (string $name): ?Middleware
     {
         return $this->middlewareByName[$name] ?? null;
     }

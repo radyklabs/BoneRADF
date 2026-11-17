@@ -13,32 +13,32 @@ final class Cache
 {
     private CacheDriver $driver;
 
-    public function __construct(CacheDriver $driver)
+    public function __construct (CacheDriver $driver)
     {
         $this->driver = $driver;
     }
 
-    public function get(string $key): mixed
+    public function get (string $key): mixed
     {
-        return $this->driver->get($key);
+        return $this->driver->get ($key);
     }
 
-    public function set(string $key, mixed $value, int $ttlSeconds = 0): void
+    public function set (string $key, mixed $value, int $ttlSeconds = 0): void
     {
-        $this->driver->set($key, $value, $ttlSeconds);
+        $this->driver->set ($key, $value, $ttlSeconds);
     }
 
-    public function delete(string $key): void
+    public function delete (string $key): void
     {
-        $this->driver->delete($key);
+        $this->driver->delete ($key);
     }
 
-    public function clear(): void
+    public function clear (): void
     {
-        $this->driver->clear();
+        $this->driver->clear ();
     }
 
-    public function driver(): CacheDriver
+    public function driver (): CacheDriver
     {
         return $this->driver;
     }

@@ -21,32 +21,37 @@ final class RateLimiter implements Middleware
     /** @var array<string, int[]> key => timestamps of requests within current window */
     private array $buckets = [];
 
-    public function __construct(int $maxRequests = 100, int $windowSeconds = 60)
+    public function __construct (int $maxRequests = 100, int $windowSeconds = 60)
     {
         $this->maxRequests = $maxRequests;
         $this->windowSeconds = $windowSeconds;
     }
 
-    public function handle(Request $req, callable $next): Response
+    public function handle (Request $req, callable $next): Response
     {
-        $key = $this->resolveKey($req);
+        $key = $this->resolveKey ($req);
 
-        try {
-            if ($this->isExceeded($key)) {
-                return Response::error(
+        try
+        {
+            if ($this->isExceeded ($key))
+            {
+                return Response::error (
                     'RATE_LIMITED',
                     'Too many requests. Try again later.',
                     429,
                     ['retry_after' => $this->windowSeconds],
                 );
             }
+
             $this->record($key);
-        } catch (\Throwable $e) {
+        }
+        catch (\Throwable $e)
+        {
             // Fail-closed: block the request rather than allowing it through
-            return Response::error('INTERNAL_ERROR', 'Rate limit check failed.', 500);
+            return Response::error ('INTERNAL_ERROR', 'Rate limit check failed.', 500);
         }
 
-        $resp = $next($req);
+        $resp = $next ($req);
         return $resp;
     }
 
@@ -56,32 +61,34 @@ final class RateLimiter implements Middleware
      * In a real implementation this could be IP, auth token, or a combination.
      * Default: client IP header or remote address.
      */
-    private function resolveKey(Request $req): string
+    private function resolveKey (Request $req): string
     {
-        $ip = $req->header('X-Forwarded-For') ?? $req->queryParam('remote_addr') ?? $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-        return (string)$ip;
+        $ip = $req->header ('X-Forwarded-For') ?? $req->queryParam ('remote_addr') ?? $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        return (string) $ip;
     }
 
-    private function isExceeded(string $key): bool
+    private function isExceeded (string $key): bool
     {
-        $now = time();
+        $now = time ();
         $windowStart = $now - $this->windowSeconds;
 
-        if (!isset($this->buckets[$key])) {
+        if (!isset ($this->buckets[$key]))
+        {
             $this->buckets[$key] = [];
         }
 
         // Prune entries outside the window
-        $filtered = array_values(array_filter($this->buckets[$key], fn (int $ts) => $ts > $windowStart));
+        $filtered = array_values (array_filter ($this->buckets[$key], fn (int $ts) => $ts > $windowStart));
         $this->buckets[$key] = $filtered;
 
-        return count($filtered) >= $this->maxRequests;
+        return count ($filtered) >= $this->maxRequests;
     }
 
     private function record(string $key): void
     {
-        $now = time();
-        if (!isset($this->buckets[$key])) {
+        $now = time ();
+        if (!isset ($this->buckets[$key]))
+        {
             $this->buckets[$key] = [];
         }
         $this->buckets[$key][] = $now;
@@ -90,8 +97,8 @@ final class RateLimiter implements Middleware
     /**
      * Reset a key's bucket (for testing).
      */
-    public function reset(string $key): void
+    public function reset (string $key): void
     {
-        unset($this->buckets[$key]);
+        unset ($this->buckets[$key]);
     }
 }

@@ -35,14 +35,15 @@ abstract class Model
     /** @var string[] relation names queued for the next terminal call */
     private array $eager = [];
 
-    public function __construct(protected PDO $pdo)
+    public function __construct (protected PDO $pdo)
     {
-        if ($this->table === '') {
-            throw new RuntimeException(static::class . ': $table is not set.');
+        if ($this->table === '')
+        {
+            throw new RuntimeException (static::class . ': $table is not set.');
         }
     }
 
-    public function primaryKey(): string
+    public function primaryKey (): string
     {
         return $this->primaryKey;
     }
@@ -51,42 +52,42 @@ abstract class Model
     // Chain
     // ------------------------------------------------------------------
 
-    public function select(string ...$columns): static
+    public function select (string ...$columns): static
     {
-        $this->query()->select(...$columns);
+        $this->query ()->select (...$columns);
         return $this;
     }
 
-    public function where(string $column, string $operator, mixed $value): static
+    public function where (string $column, string $operator, mixed $value): static
     {
-        $this->query()->where($column, $operator, $value);
+        $this->query ()->where ($column, $operator, $value);
         return $this;
     }
 
     /**
      * @param array<int|string, mixed> $values
      */
-    public function whereIn(string $column, array $values): static
+    public function whereIn (string $column, array $values): static
     {
-        $this->query()->whereIn($column, $values);
+        $this->query ()->whereIn ($column, $values);
         return $this;
     }
 
-    public function orderBy(string $column, string $direction = 'ASC'): static
+    public function orderBy (string $column, string $direction = 'ASC'): static
     {
-        $this->query()->orderBy($column, $direction);
+        $this->query ()->orderBy ($column, $direction);
         return $this;
     }
 
-    public function limit(int $limit): static
+    public function limit (int $limit): static
     {
-        $this->query()->limit($limit);
+        $this->query ()->limit ($limit);
         return $this;
     }
 
-    public function offset(int $offset): static
+    public function offset (int $offset): static
     {
-        $this->query()->offset($offset);
+        $this->query ()->offset ($offset);
         return $this;
     }
 
@@ -95,11 +96,13 @@ abstract class Model
      *
      * @param string ...$names  relation method names on this model
      */
-    public function with(string ...$names): static
+    public function with (string ...$names): static
     {
-        foreach ($names as $name) {
+        foreach ($names as $name)
+        {
             $this->eager[] = $name;
         }
+
         return $this;
     }
 
@@ -110,26 +113,28 @@ abstract class Model
     /**
      * @return array<int, array<string, mixed>>
      */
-    public function get(): array
+    public function get (): array
     {
-        $rows = $this->query()->get();
-        $this->applyEager($rows);
-        $this->reset();
+        $rows = $this->query ()->get ();
+        $this->applyEager ($rows);
+        $this->reset ();
         return $rows;
     }
 
     /**
      * @return array<string, mixed>|null
      */
-    public function first(): ?array
+    public function first (): ?array
     {
-        $row = $this->query()->first();
-        if ($row !== null) {
+        $row = $this->query ()->first ();
+        if ($row !== null)
+        {
             $rows = [$row];
-            $this->applyEager($rows);
+            $this->applyEager ($rows);
             $row = $rows[0];
         }
-        $this->reset();
+
+        $this->reset ();
         return $row;
     }
 
@@ -139,18 +144,20 @@ abstract class Model
      *
      * @return array<string, mixed>|null
      */
-    public function find(int|string $id): ?array
+    public function find (int|string $id): ?array
     {
-        $row = (new QueryBuilder($this->pdo))
-            ->table($this->table)
-            ->where($this->primaryKey, '=', $id)
-            ->first();
-        if ($row !== null) {
+        $row = (new QueryBuilder ($this->pdo))
+            ->table ($this->table)
+            ->where ($this->primaryKey, '=', $id)
+            ->first ();
+        if ($row !== null)
+        {
             $rows = [$row];
-            $this->applyEager($rows);
+            $this->applyEager ($rows);
             $row = $rows[0];
         }
-        $this->reset();
+
+        $this->reset ();
         return $row;
     }
 
@@ -158,10 +165,10 @@ abstract class Model
      * @param array<string, mixed> $data  column => value (bound parameters)
      * @return int  last insert id
      */
-    public function insert(array $data): int
+    public function insert (array $data): int
     {
-        $id = $this->query()->insert($data);
-        $this->reset();
+        $id = $this->query ()->insert ($data);
+        $this->reset ();
         return $id;
     }
 
@@ -171,10 +178,10 @@ abstract class Model
      *
      * @return int  affected rows
      */
-    public function update(array $data): int
+    public function update (array $data): int
     {
-        $affected = $this->query()->update($data);
-        $this->reset();
+        $affected = $this->query ()->update ($data);
+        $this->reset ();
         return $affected;
     }
 
@@ -184,17 +191,17 @@ abstract class Model
      *
      * @return int  affected rows
      */
-    public function delete(): int
+    public function delete (): int
     {
-        $affected = $this->query()->delete();
-        $this->reset();
+        $affected = $this->query ()->delete ();
+        $this->reset ();
         return $affected;
     }
 
-    public function count(): int
+    public function count (): int
     {
-        $count = $this->query()->count();
-        $this->reset();
+        $count = $this->query ()->count ();
+        $this->reset ();
         return $count;
     }
 
@@ -202,28 +209,28 @@ abstract class Model
     // Relations — declare on the concrete model, return these
     // ------------------------------------------------------------------
 
-    protected function hasOne(string $related, string $foreignKey, ?string $localKey = null): Relation
+    protected function hasOne (string $related, string $foreignKey, ?string $localKey = null): Relation
     {
-        return new Relation(Relation::HAS_ONE, $related, $foreignKey, $localKey ?? $this->primaryKey);
+        return new Relation (Relation::HAS_ONE, $related, $foreignKey, $localKey ?? $this->primaryKey);
     }
 
-    protected function hasMany(string $related, string $foreignKey, ?string $localKey = null): Relation
+    protected function hasMany (string $related, string $foreignKey, ?string $localKey = null): Relation
     {
-        return new Relation(Relation::HAS_MANY, $related, $foreignKey, $localKey ?? $this->primaryKey);
+        return new Relation (Relation::HAS_MANY, $related, $foreignKey, $localKey ?? $this->primaryKey);
     }
 
-    protected function belongsTo(string $related, string $foreignKey, ?string $ownerKey = null): Relation
+    protected function belongsTo (string $related, string $foreignKey, ?string $ownerKey = null): Relation
     {
-        return new Relation(Relation::BELONGS_TO, $related, $foreignKey, $this->primaryKey, $ownerKey ?? '');
+        return new Relation (Relation::BELONGS_TO, $related, $foreignKey, $this->primaryKey, $ownerKey ?? '');
     }
 
     /**
      * @param string $foreignKey  pivot column pointing at this model
      * @param string $relatedKey  pivot column pointing at the related model
      */
-    protected function belongsToMany(string $related, string $pivot, string $foreignKey, string $relatedKey): Relation
+    protected function belongsToMany (string $related, string $pivot, string $foreignKey, string $relatedKey): Relation
     {
-        return new Relation(Relation::BELONGS_TO_MANY, $related, $foreignKey, $this->primaryKey, $relatedKey, $pivot);
+        return new Relation (Relation::BELONGS_TO_MANY, $related, $foreignKey, $this->primaryKey, $relatedKey, $pivot);
     }
 
     // ------------------------------------------------------------------
@@ -236,102 +243,131 @@ abstract class Model
      *
      * @param array<int, array<string, mixed>> $rows
      */
-    private function applyEager(array &$rows): void
+    private function applyEager (array &$rows): void
     {
-        if ($this->eager === [] || $rows === []) {
+        if ($this->eager === [] || $rows === [])
+        {
             return;
         }
 
-        foreach ($this->eager as $name) {
-            $rel = $this->resolveRelation($name);
+        foreach ($this->eager as $name)
+        {
+            $rel = $this->resolveRelation ($name);
             /** @var class-string<Model> $related */
             $related = $rel->related;
-            $target  = new $related($this->pdo);
+            $target  = new $related ($this->pdo);
 
-            switch ($rel->type) {
+            switch ($rel->type)
+            {
                 case Relation::HAS_MANY:
                 case Relation::HAS_ONE:
-                    $keys = $this->keyValues($rows, $rel->localKey);
+                    $keys = $this->keyValues ($rows, $rel->localKey);
                     $children = $keys === [] ? [] : $target
-                        ->whereIn($rel->foreignKey, $keys)
-                        ->orderBy($target->primaryKey(), 'ASC')
-                        ->get();
+                        ->whereIn ($rel->foreignKey, $keys)
+                        ->orderBy ($target->primaryKey (), 'ASC')
+                        ->get ();
                     $groups = [];
-                    foreach ($children as $child) {
+                    foreach ($children as $child)
+                    {
                         $groups[(string)$child[$rel->foreignKey]][] = $child;
                     }
-                    foreach ($rows as &$row) {
-                        $bucket = $groups[(string)($row[$rel->localKey] ?? '')] ?? [];
+
+                    foreach ($rows as &$row)
+                    {
+                        $bucket = $groups[(string) ($row[$rel->localKey] ?? '')] ?? [];
                         $row[$name] = $rel->type === Relation::HAS_ONE ? ($bucket[0] ?? null) : $bucket;
                     }
-                    unset($row);
+
+                    unset ($row);
                     break;
 
                 case Relation::BELONGS_TO:
-                    $ownerKey = $rel->ownerKey !== '' ? $rel->ownerKey : $target->primaryKey();
-                    $keys     = $this->keyValues($rows, $rel->foreignKey);
-                    $parents  = $keys === [] ? [] : $target->whereIn($ownerKey, $keys)->get();
+                    $ownerKey = $rel->ownerKey !== '' ? $rel->ownerKey : $target->primaryKey ();
+                    $keys     = $this->keyValues ($rows, $rel->foreignKey);
+                    $parents  = $keys === [] ? [] : $target->whereIn ($ownerKey, $keys)->get ();
                     $index    = [];
-                    foreach ($parents as $parent) {
-                        $index[(string)$parent[$ownerKey]] = $parent;
+                    foreach ($parents as $parent)
+                    {
+                        $index[(string) $parent[$ownerKey]] = $parent;
                     }
-                    foreach ($rows as &$row) {
+
+                    foreach ($rows as &$row)
+                    {
                         $fk = $row[$rel->foreignKey] ?? null;
                         $row[$name] = $fk === null ? null : ($index[(string)$fk] ?? null);
                     }
-                    unset($row);
+
+                    unset ($row);
                     break;
 
                 case Relation::BELONGS_TO_MANY:
-                    $pivot     = (string)$rel->pivot;
-                    $keys      = $this->keyValues($rows, $rel->localKey);
-                    $pivotRows = $keys === [] ? [] : (new QueryBuilder($this->pdo))
-                        ->table($pivot)
-                        ->whereIn($rel->foreignKey, $keys)
-                        ->get();
+                    $pivot     = (string) $rel->pivot;
+                    $keys      = $this->keyValues ($rows, $rel->localKey);
+                    $pivotRows = $keys === [] ? [] : (new QueryBuilder ($this->pdo))
+                        ->table ($pivot)
+                        ->whereIn ($rel->foreignKey, $keys)
+                        ->get ();
                     $relatedIds = [];
-                    foreach ($pivotRows as $pivotRow) {
+                    foreach ($pivotRows as $pivotRow)
+                    {
                         $relatedIds[] = $pivotRow[$rel->ownerKey];
                     }
-                    $relatedIds = array_values(array_unique($relatedIds, SORT_REGULAR));
+
+                    $relatedIds = array_values (array_unique($relatedIds, SORT_REGULAR));
                     $byId       = [];
-                    if ($relatedIds !== []) {
-                        foreach ($target->whereIn($target->primaryKey(), $relatedIds)->get() as $t) {
-                            $byId[(string)$t[$target->primaryKey()]] = $t;
+                    if ($relatedIds !== [])
+                    {
+                        foreach ($target->whereIn ($target->primaryKey (), $relatedIds)->get () as $t)
+                        {
+                            $byId[(string) $t[$target->primaryKey ()]] = $t;
                         }
                     }
+
                     $perParent = [];
-                    foreach ($pivotRows as $pivotRow) {
-                        $child = $byId[(string)$pivotRow[$rel->ownerKey]] ?? null;
-                        if ($child !== null) {
-                            $perParent[(string)$pivotRow[$rel->foreignKey]][] = $child;
+                    foreach ($pivotRows as $pivotRow)
+                    {
+                        $child = $byId[(string) $pivotRow[$rel->ownerKey]] ?? null;
+                        if ($child !== null)
+                        {
+                            $perParent[(string) $pivotRow[$rel->foreignKey]][] = $child;
                         }
                     }
-                    foreach ($rows as &$row) {
-                        $row[$name] = $perParent[(string)($row[$rel->localKey] ?? '')] ?? [];
+
+                    foreach ($rows as &$row)
+                    {
+                        $row[$name] = $perParent[(string) ($row[$rel->localKey] ?? '')] ?? [];
                     }
-                    unset($row);
+
+                    unset ($row);
                     break;
 
                 default:
-                    throw new RuntimeException(static::class . "::{$name}(): unknown relation type.");
+                    throw new RuntimeException (static::class . "::{$name}(): unknown relation type.");
             }
         }
     }
 
-    private function resolveRelation(string $name): Relation
+    private function resolveRelation (string $name): Relation
     {
-        if (!method_exists($this, $name)) {
-            throw new RuntimeException(static::class . ": relation '{$name}' does not exist.");
+        if (!method_exists ($this, $name))
+        {
+            throw new RuntimeException (static::class . ": relation '{$name}' does not exist.");
         }
-        try {
-            $relation = $this->{$name}();
-        } catch (Throwable $e) {
-            throw new RuntimeException(static::class . "::{$name}() is not a relation method.", 0, $e);
+
+        try
+        {
+            $relation = $this->{$name} ();
         }
-        if (!$relation instanceof Relation) {
-            throw new RuntimeException(static::class . "::{$name}() must return a Relation.");
+        catch (Throwable $e)
+        {
+            throw new RuntimeException (static::class . "::{$name}() is not a relation method.", 0, $e);
         }
+
+        if (!$relation instanceof Relation)
+        {
+            throw new RuntimeException (static::class . "::{$name}() must return a Relation.");
+        }
+
         return $relation;
     }
 
@@ -341,24 +377,27 @@ abstract class Model
      * @param array<int, array<string, mixed>> $rows
      * @return array<int, mixed>
      */
-    private function keyValues(array $rows, string $key): array
+    private function keyValues (array $rows, string $key): array
     {
         $values = [];
-        foreach ($rows as $row) {
+        foreach ($rows as $row)
+        {
             $value = $row[$key] ?? null;
-            if ($value !== null && $value !== '') {
+            if ($value !== null && $value !== '')
+            {
                 $values[] = $value;
             }
         }
-        return array_values(array_unique($values, SORT_REGULAR));
+
+        return array_values (array_unique($values, SORT_REGULAR));
     }
 
-    private function query(): QueryBuilder
+    private function query (): QueryBuilder
     {
-        return $this->qb ??= (new QueryBuilder($this->pdo))->table($this->table);
+        return $this->qb ??= (new QueryBuilder ($this->pdo))->table ($this->table);
     }
 
-    private function reset(): void
+    private function reset (): void
     {
         $this->qb    = null;
         $this->eager = [];

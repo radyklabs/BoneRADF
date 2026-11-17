@@ -23,9 +23,9 @@ final class SecurityHeaders implements Middleware
     /**
      * @param array<string, string> $overrides  header-name => value
      */
-    public function __construct(array $overrides = [])
+    public function __construct (array $overrides = [])
     {
-        $this->headers = array_merge([
+        $this->headers = array_merge ([
             'Content-Security-Policy'  => "default-src 'none'; frame-ancestors 'none'",
             'Strict-Transport-Security' => 'max-age=63072000; includeSubDomains; preload',
             'X-Frame-Options'          => 'DENY',
@@ -34,11 +34,12 @@ final class SecurityHeaders implements Middleware
         ], $overrides);
     }
 
-    public function handle(Request $req, callable $next): Response
+    public function handle (Request $req, callable $next): Response
     {
-        $resp = $next($req);
-        foreach ($this->headers as $name => $value) {
-            $resp = $resp->withHeader($name, $value);
+        $resp = $next ($req);
+        foreach ($this->headers as $name => $value)
+        {
+            $resp = $resp->withHeader ($name, $value);
         }
         return $resp;
     }
@@ -46,7 +47,7 @@ final class SecurityHeaders implements Middleware
     /**
      * @return array<string, string>
      */
-    public function headers(): array
+    public function headers (): array
     {
         return $this->headers;
     }

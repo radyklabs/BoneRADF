@@ -23,7 +23,7 @@ final class AuthGuard implements Middleware
     private int $accessTtl;
     private int $refreshTtl;
 
-    public function __construct(
+    public function __construct (
         string $secret,
         int $accessTtl = 3600,
         int $refreshTtl = 604800,
@@ -33,22 +33,24 @@ final class AuthGuard implements Middleware
         $this->refreshTtl = $refreshTtl;
     }
 
-    public function handle(Request $req, callable $next): Response
+    public function handle (Request $req, callable $next): Response
     {
-        $auth = $req->header('Authorization');
-        if ($auth === null || !str_starts_with($auth, 'Bearer ')) {
-            return Response::error('UNAUTHENTICATED', 'Missing or malformed Authorization header.', 401);
+        $auth = $req->header ('Authorization');
+        if ($auth === null || !str_starts_with ($auth, 'Bearer '))
+        {
+            return Response::error ('UNAUTHENTICATED', 'Missing or malformed Authorization header.', 401);
         }
 
-        $token = substr($auth, 7);
-        $payload = $this->verify($token);
-        if ($payload === null) {
-            return Response::error('UNAUTHENTICATED', 'Invalid or expired token.', 401);
+        $token = substr ($auth, 7);
+        $payload = $this->verify ($token);
+        if ($payload === null)
+        {
+            return Response::error ('UNAUTHENTICATED', 'Invalid or expired token.', 401);
         }
 
         // Attach identity to request (mutable clone)
-        $req2 = $req->withUser($payload);
-        return $next($req2);
+        $req2 = $req->withUser ($payload);
+        return $next ($req2);
     }
 
     /**
@@ -56,21 +58,21 @@ final class AuthGuard implements Middleware
      *
      * @param array<string, mixed> $claims  e.g. ['sub' => 42, 'role' => 'admin']
      */
-    public function issue(array $claims): string
+    public function issue (array $claims): string
     {
         $header = ['alg' => $this->algo, 'typ' => 'JWT'];
-        $now = time();
-        $claims = array_merge([
+        $now = time ();
+        $claims = array_merge ([
             'iat' => $now,
             'nbf' => $now,
             'exp' => $now + $this->accessTtl,
             'type' => 'access',
         ], $claims);
 
-        $h = $this->base64UrlEncode(json_encode($header, JSON_THROW_ON_ERROR));
-        $p = $this->base64UrlEncode(json_encode($claims, JSON_THROW_ON_ERROR));
-        $sig = hash_hmac('sha256', $h . '.' . $p, $this->secret, true);
-        return $h . '.' . $p . '.' . $this->base64UrlEncode($sig);
+        $h = $this->base64UrlEncode (json_encode($header, JSON_THROW_ON_ERROR));
+        $p = $this->base64UrlEncode (json_encode($claims, JSON_THROW_ON_ERROR));
+        $sig = hash_hmac ('sha256', $h . '.' . $p, $this->secret, true);
+        return $h . '.' . $p . '.' . $this->base64UrlEncode ($sig);
     }
 
     /**
@@ -78,21 +80,21 @@ final class AuthGuard implements Middleware
      *
      * @param array<string, mixed> $claims  sub + role (no type marker; added here)
      */
-    public function issueRefresh(array $claims): string
+    public function issueRefresh (array $claims): string
     {
         $claims['type'] = 'refresh';
         $header = ['alg' => $this->algo, 'typ' => 'JWT'];
-        $now = time();
-        $claims = array_merge([
+        $now = time ();
+        $claims = array_merge ([
             'iat' => $now,
             'nbf' => $now,
             'exp' => $now + $this->refreshTtl,
         ], $claims);
 
-        $h = $this->base64UrlEncode(json_encode($header, JSON_THROW_ON_ERROR));
-        $p = $this->base64UrlEncode(json_encode($claims, JSON_THROW_ON_ERROR));
-        $sig = hash_hmac('sha256', $h . '.' . $p, $this->secret, true);
-        return $h . '.' . $p . '.' . $this->base64UrlEncode($sig);
+        $h = $this->base64UrlEncode (json_encode($header, JSON_THROW_ON_ERROR));
+        $p = $this->base64UrlEncode (json_encode($claims, JSON_THROW_ON_ERROR));
+        $sig = hash_hmac ('sha256', $h . '.' . $p, $this->secret, true);
+        return $h . '.' . $p . '.' . $this->base64UrlEncode ($sig);
     }
 
     /**
@@ -100,53 +102,61 @@ final class AuthGuard implements Middleware
      *
      * @return array<string, mixed>|null
      */
-    public function verify(string $token): ?array
+    public function verify (string $token): ?array
     {
-        $parts = explode('.', $token);
-        if (count($parts) !== 3) {
+        $parts = explode ('.', $token);
+        if (count ($parts) !== 3)
+        {
             return null;
         }
         [$h, $p, $sig] = $parts;
 
-        $expected = hash_hmac('sha256', $h . '.' . $p, $this->secret, true);
-        $expectedB64 = $this->base64UrlEncode($expected);
-        if (!hash_equals($expectedB64, $sig)) {
+        $expected = hash_hmac ('sha256', $h . '.' . $p, $this->secret, true);
+        $expectedB64 = $this->base64UrlEncode ($expected);
+        if (!hash_equals ($expectedB64, $sig))
+        {
             return null;
         }
 
         // Algorithm must match (no negotiation from token header)
-        $header = json_decode($this->base64UrlDecode($h), true);
-        if (!is_array($header) || ($header['alg'] ?? '') !== $this->algo) {
+        $header = json_decode ($this->base64UrlDecode ($h), true);
+        if (!is_array ($header) || ($header['alg'] ?? '') !== $this->algo)
+        {
             return null;
         }
 
-        $claims = json_decode($this->base64UrlDecode($p), true);
-        if (!is_array($claims)) {
+        $claims = json_decode ($this->base64UrlDecode ($p), true);
+        if (!is_array ($claims))
+        {
             return null;
         }
 
         // exp / nbf
-        if (isset($claims['exp']) && time() > (int)$claims['exp']) {
+        if (isset ($claims['exp']) && time () > (int) $claims['exp'])
+        {
             return null;
         }
-        if (isset($claims['nbf']) && time() < (int)$claims['nbf']) {
+
+        if (isset ($claims['nbf']) && time () < (int) $claims['nbf'])
+        {
             return null;
         }
 
         return $claims;
     }
 
-    private function base64UrlEncode(string $data): string
+    private function base64UrlEncode (string $data): string
     {
-        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+        return rtrim (strtr (base64_encode ($data), '+/', '-_'), '=');
     }
 
-    private function base64UrlDecode(string $data): string
+    private function base64UrlDecode (string $data): string
     {
-        $remainder = strlen($data) % 4;
-        if ($remainder !== 0) {
-            $data .= str_repeat('=', 4 - $remainder);
+        $remainder = strlen ($data) % 4;
+        if ($remainder !== 0)
+        {
+            $data .= str_repeat ('=', 4 - $remainder);
         }
-        return base64_decode(strtr($data, '-_', '+/'), true) ?: '';
+        return base64_decode (strtr ($data, '-_', '+/'), true) ?: '';
     }
 }

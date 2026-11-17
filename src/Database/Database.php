@@ -25,7 +25,8 @@ final class Database
      */
     public static function fromEnv (): PDO
     {
-        if (self::$pdo !== null) {
+        if (self::$pdo !== null)
+        {
             return self::$pdo;
         }
 

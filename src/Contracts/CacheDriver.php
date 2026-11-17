@@ -11,8 +11,8 @@ namespace Boneradf\Contracts;
  */
 interface CacheDriver
 {
-    public function get(string $key): mixed;
-    public function set(string $key, mixed $value, int $ttlSeconds = 0): void;
-    public function delete(string $key): void;
-    public function clear(): void;
+    public function get (string $key): mixed;
+    public function set (string $key, mixed $value, int $ttlSeconds = 0): void;
+    public function delete (string $key): void;
+    public function clear (): void;
 }
