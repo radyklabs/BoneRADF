@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Modules\Resources;
 
 use Boneradf\Container\Container;
-use Boneradf\Database\ConnectionFactory;
+use Boneradf\Database\Database;
 use Boneradf\Middleware\Pipeline;
 use Boneradf\Contracts\Module;
 use Boneradf\Router\Router;
-use PDO;
+use Modules\Resources\Controllers\ResourceController;
+use Modules\Resources\Models\ResourceModel;
+use Modules\Resources\Services\ResourceService;
 
 /**
  * Resources module — CRUD over the sample `resources` table.
@@ -31,17 +33,7 @@ final class ResourcesModule implements Module
 
     public function boot(Container $container, Router $router, Pipeline $pipeline): void
     {
-        $dsn    = getenv('BONERADF_DB_DSN') ?: 'mysql:host=127.0.0.1;port=10028;dbname=local;charset=utf8mb4';
-        $dbUser = getenv('BONERADF_DB_USER') ?: 'root';
-        $dbPass = getenv('BONERADF_DB_PASS') ?: 'root';
-
-        $pdo = (new ConnectionFactory($dsn, $dbUser, $dbPass, [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES  => false,
-        ]))->connect();
-
-        $service = new ResourceService($pdo);
+        $service = new ResourceService(new ResourceModel(Database::fromEnv()));
         $container->instance('resources.service', $service);
         $container->instance(ResourceController::class, new ResourceController($service));
     }

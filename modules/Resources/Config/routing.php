@@ -2,6 +2,8 @@
 
 namespace Modules\Resources;
 
+use Modules\Resources\Controllers\ResourceController;
+
 /**
  * Resources module route contributions.
  *

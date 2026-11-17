@@ -111,9 +111,9 @@ final class Boot
 
             $index_file = self::$basepath . '/public/index.php';
 
-            foreach (\read_directories ($index_file) as $type => $dir)
+            foreach (read_directories ($index_file) as $type => $dir)
             {
-                define ($type, \interlace (basepath, $dir));
+                define ($type, interlace (basepath, $dir));
             }
         }
 
@@ -139,36 +139,37 @@ final class Boot
             return;
         }
 
-        // Contoh class: 'Modules\Auth\LoginService'
-        //   nsmod    = 'Modules\\'          (namespace prefix + trailing \)
-        //   $relative= 'Auth\LoginService'  (sisa namespace setelah prefix)
-        //   $parts   = ['Auth', 'LoginService']  (explode limit 2 → nama modul + sisanya)
-        //   $name    = 'Auth'               (nama modul → folder modules/Auth/)
-        //   $inner   = 'LoginService'       ('' kalau class = 'Modules\Auth' saja)
-        //   $relPath = 'LoginService'       (path relatif dlm modul, \ → /)
+        // Contoh class: 'Modules\Auth\Services\LoginService'
+        //   nsmod    = 'Modules\\'                  (namespace prefix + trailing \)
+        //   $relative= 'Auth\Services\LoginService' (sisa namespace setelah prefix)
+        //   $parts   = ['Auth', 'Services\LoginService'] (explode limit 2 → modul + sisanya)
+        //   $name    = 'Auth'          (nama modul → folder modules/Auth/)
+        //   $inner   = 'Services\LoginService'
+        //   $relPath = 'Services/LoginService' (path relatif dlm modul, \ → /)
         //   kandidat = modules/Auth/src/LoginService.php   ← cek pertama (PSR-4)
         //              modules/Auth/LoginService.php      ← cek kedua (bootstrap class)
         if (str_starts_with ($class, self::$nsmod))
         {
-            $relative = substr ($class, strlen (self::$nsmod));
-            $parts    = explode ('\\', $relative, 2);
+            // $relative = substr ($class, strlen (self::$nsmod));
+            // $parts    = explode ('\\', $relative, 2);
             // $name     = $parts[0];
             // $inner    = $parts[1] ?? '';
-            $modulename  = array_shift ($parts);
-            $classname = end ($parts);
+            // $modulename  = array_shift ($parts);
+            // $classname = end ($parts);
             // $relPath  = $inner !== '' ? str_replace ('\\', '/', $inner) : $name;
 
-            foreach ([
+            // foreach ([
                 // self::modulesDir () . '/' . $name . '/src/' . $relPath . '.php',
                 // self::modulesDir () . '/' . $name . '/' . $relPath . '.php',
-                interlace (modules, $modulename, 'src', "{$classname}.php"),
-                interlace (modules, $modulename, "{$classname}.php")
-            ] as $file) {
-                if (is_file ($file)) {
-                    require $file;
-                    return;
-                }
+                // interlace (modules, $modulename, 'src', "{$classname}.php"),
+                // interlace (modules, $modulename, "{$classname}.php")
+            // ] as $file) {
+            $module_file = interlace (modules, substr ($class, strlen (self::$nsmod)).'.php');
+            if (is_readable ($module_file)) {
+                require $module_file;
+                return;
             }
+            // }
         }
     }
 

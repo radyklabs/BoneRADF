@@ -2,30 +2,30 @@
 
 declare(strict_types=1);
 
-namespace Modules\Resources;
+namespace Modules\Resources\Services;
 
-use Boneradf\Database\QueryBuilder;
 use Boneradf\Kernel\Request;
 use Boneradf\Kernel\Response;
 use Boneradf\Validator\Validator;
-use PDO;
+use Modules\Resources\Models\ResourceModel;
 use PDOException;
 
 /**
- * Resources service — CRUD over the `resources` table (prepared statements
- * only). Handlers validate at the trust boundary (name: required|string|1..191).
+ * Resources service — validation + orchestration. All table access lives in
+ * ResourceModel (QueryBuilder, prepared statements); handlers validate at the
+ * trust boundary (name: required|string|1..191).
  *
  * ponytail: the `resources` table is a sample domain (one `name` column) —
- * a real service would carry a richer schema. The repository pattern
- * (find/list/insert/update/delete) is the upgrade path when more tables land.
+ * cross-table use-cases belong here when a richer schema lands; table access
+ * stays in Models/.
  */
 final class ResourceService
 {
-    private PDO $pdo;
+    private ResourceModel $model;
 
-    public function __construct(PDO $pdo)
+    public function __construct(ResourceModel $model)
     {
-        $this->pdo = $pdo;
+        $this->model = $model;
     }
 
     /**
@@ -33,11 +33,7 @@ final class ResourceService
      */
     public function list(): array
     {
-        return (new QueryBuilder($this->pdo))
-            ->table('resources')
-            ->select('id', 'name', 'created_at')
-            ->orderBy('id', 'ASC')
-            ->get();
+        return $this->model->listAll();
     }
 
     /**
@@ -45,11 +41,7 @@ final class ResourceService
      */
     public function find(string $id): ?array
     {
-        return (new QueryBuilder($this->pdo))
-            ->table('resources')
-            ->select('id', 'name', 'created_at')
-            ->where('id', '=', $id)
-            ->first();
+        return $this->model->find($id);
     }
 
     /**
@@ -65,9 +57,7 @@ final class ResourceService
         }
 
         try {
-            $id = (new QueryBuilder($this->pdo))
-                ->table('resources')
-                ->insert(['name' => $data['name']]);
+            $id = $this->model->insert(['name' => $data['name']]);
         } catch (PDOException) {
             return [false, null, null];
         }
@@ -88,10 +78,7 @@ final class ResourceService
         }
 
         try {
-            (new QueryBuilder($this->pdo))
-                ->table('resources')
-                ->where('id', '=', $id)
-                ->update(['name' => $data['name']]);
+            $this->model->where('id', '=', $id)->update(['name' => $data['name']]);
         } catch (PDOException) {
             return [false, null, null];
         }
@@ -105,10 +92,7 @@ final class ResourceService
     public function delete(string $id): bool
     {
         try {
-            return (new QueryBuilder($this->pdo))
-                ->table('resources')
-                ->where('id', '=', $id)
-                ->delete() > 0;
+            return $this->model->where('id', '=', $id)->delete() > 0;
         } catch (PDOException) {
             return false;
         }

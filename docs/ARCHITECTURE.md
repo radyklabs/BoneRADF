@@ -96,14 +96,17 @@ modules/
     Config/
       modules.php    (manifest: class, depends_on)
       routing.php    (aliases: 'METHOD /path/{param:type}' => [Controller::class, 'method'])
-    src/             (PSR-4, namespace Modules\<ModuleName>\)
-    <ModuleName>Module.php  (module bootstrap class, at module root)
-    <module>.php     (optional: seed / migration / bootstrap scripts)
+    Controllers/      (namespace Modules\<ModuleName>\Controllers — HTTP only)
+    Models/           (namespace Modules\<ModuleName>\Models — table access via Boneradf\Database\Model)
+    Services/         (namespace Modules\<ModuleName>\Services — business rules, zero SQL)
+    <ModuleName>Module.php  (module bootstrap class, at module root — wiring only)
+    <module>.php      (optional: seed / migration / bootstrap scripts)
 ```
 
-Autoloading: `Boot::autoload()` maps
-`Modules\<Name>\X` → `modules/<Name>/src/X.php` (and checks
-`modules/<Name>/X.php` for the bootstrap class). No Composer, no auto-discovery.
+Autoloading: `Boot::autoload()` maps `Modules\<Name>\<Rest>` →
+`modules/<Name>/<Rest>.php` (nested dirs included — full-MVC layout; the
+legacy `modules/<Name>/src/` concept is retired). No Composer, no
+auto-discovery.
 
 Framework-side layout conventions:
 
@@ -129,6 +132,14 @@ A module may, inside `boot()`:
 - register middleware onto the pipeline (§7 order: core defense middleware is
   registered first and cannot be reordered away by modules; modules append);
 - register config keys with defaults.
+
+Data access is system-level: `Database::fromEnv()`
+(`src/Database/Database.php`) reads `BONERADF_DB_*` once and memoizes one
+shared PDO per process. `boot()` wires `new XModel(Database::fromEnv())`
+into services; table access lives exclusively in `Models/` as subclasses of
+`Boneradf\Database\Model` (active-record over the query builder — prepared
+statements only, rows stay arrays, eager relations via `with()`).
+`Services/` must contain zero SQL; `Controllers/` contain HTTP only.
 
 Routes are **declarative**, not registered in `boot()`: they live in
 `modules/<Name>/Config/routing.php` as `'METHOD /path/{param:type}' =>
@@ -288,4 +299,4 @@ The container is the single composition root: extending the framework = binding 
 
 ---
 
-Last synced: 2026-11-16 — §5 module contract implemented (module system + first `AuthModule`); project root at `app/`.
+Last synced: 2026-11-17 — §5 full-MVC module layout (Controllers/Models/Services), system-level `Database::fromEnv()`, in-tree AR `Model` with eager relations; suite p0–p7 192/192; project root at `app/`.

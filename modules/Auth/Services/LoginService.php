@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Modules\Auth;
+namespace Modules\Auth\Services;
 
 use Boneradf\Security\AuthGuard;
 use Boneradf\Validator\Validator;
-use PDO;
+use Modules\Auth\Models\UserModel;
 use PDOException;
 
 /**
  * Login service — validates credentials against the `users` table and issues
  * an access + refresh JWT pair.
  *
- * The service is the single place that touches the DB for auth; the module's
- * `boot()` wires routes to its methods. Fail-closed: DB errors surface as a
- * failed login, never as a successful one.
+ * UserModel owns the `users` query; this service holds the auth business
+ * rules. Fail-closed: DB errors surface as a failed login, never as a
+ * successful one.
  *
  * ponytail: the refresh token is a separate JWT with a longer TTL (D10: access
  * 1h + refresh 7d). A refresh *revocation* list is deferred — a refresh token
@@ -24,13 +24,13 @@ use PDOException;
  */
 final class LoginService
 {
-    private PDO $pdo;
+    private UserModel $users;
     private AuthGuard $auth;
 
-    public function __construct(PDO $pdo, AuthGuard $auth)
+    public function __construct(UserModel $users, AuthGuard $auth)
     {
-        $this->pdo  = $pdo;
-        $this->auth = $auth;
+        $this->users = $users;
+        $this->auth  = $auth;
     }
 
     /**
@@ -54,16 +54,8 @@ final class LoginService
         }
 
         try {
-            $stmt = $this->pdo->prepare(
-                'SELECT `id`, `username`, `password_hash`, `role`
-                   FROM `users`
-                  WHERE `username` = ?
-                  LIMIT 1'
-            );
-            $stmt->execute([$username]);
-            /** @var array<string, mixed>|false $row */
-            $row = $stmt->fetch();
-        } catch (PDOException $e) {
+            $row = $this->users->findByUsername($username);
+        } catch (PDOException) {
             // DB failure — fail-closed. Do not leak the error message.
             return [false, null];
         }
@@ -71,7 +63,7 @@ final class LoginService
         // A stable dummy hash so failed lookups take the same time as real
         // checks (avoid a user-existence oracle via response timing).
         $dummy = self::dummyHash();
-        if ($row === false || $row === null) {
+        if ($row === null) {
             password_verify($password, $dummy);
             return [false, null];
         }

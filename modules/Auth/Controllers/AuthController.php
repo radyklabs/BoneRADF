@@ -1,10 +1,11 @@
 <?php declare (strict_types=1);
 
-namespace Modules\Auth;
+namespace Modules\Auth\Controllers;
 
 use Boneradf\Kernel\Request;
 use Boneradf\Kernel\Response;
 use Boneradf\Validator\ValidationResult;
+use Modules\Auth\Services\LoginService;
 
 /**
  * Auth HTTP handlers. Bound to the container by AuthModule::boot().

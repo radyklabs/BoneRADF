@@ -67,6 +67,10 @@ For logic or major changes:
 ## File & Code Conventions
 
 - PSR-4 under `Boneradf\` (e.g. `Boneradf\Router\...` → `src/Router/...`).
+- Module layout: `modules/<Name>/` = `Controllers/` (HTTP only), `Models/`
+  (table access — the only SQL in a module), `Services/` (business logic,
+  zero SQL), `Config/`, `{Name}Module.php` (bootstrap, wiring only). DB
+  settings are system-level (`Database::fromEnv()`), never in modules.
 - One service per project install (D4).
 - Defense-by-default: secure options are the defaults; opting out is explicit.
 - Boring over clever. Minimal diff. No drive-by refactors.

@@ -64,7 +64,8 @@ src/                      — PSR-4 root for Boneradf\ (core framework)
   Container/              — light DI, explicit bindings only
   Config/                 — typed config, env > file > defaults
   Logger/                 — structured logging (FileLogger)
-  Database/               — PDO query builder, prepared statements only
+  Database/               — PDO query builder + AR Model/Relation (prepared
+                            only, arrays out) + Database::fromEnv factory
   Validator/              — strict validation, 422 on fail
   Security/               — SecurityHeaders, CSRF, Auth (JWT HS256), RBAC,
                             RateLimit, CorsMiddleware — ON by default
@@ -76,9 +77,11 @@ src/                      — PSR-4 root for Boneradf\ (core framework)
 modules/                  — development layer (PSR-4, namespace Modules\<Name>\)
   Auth/                   — first module: login + refresh + CORS + users seed
     AuthModule.php        — module bootstrap class (implements Boneradf\Contracts\Module)
-    src/LoginService.php  — credential check + JWT issuance
+    Controllers/          — HTTP handlers only (namespace Modules\<Name>\Controllers)
+    Models/               — table access via AR Model — the only SQL in a module
+    Services/             — business logic, zero SQL (namespace \Services)
     seed.php              — idempotent `users` table + sample user bootstrap
-tests/                    — micro test suite p0–p6
+tests/                    — micro test suite p0–p7
 ```
 
 ## Docs Sync Rule

@@ -1,9 +1,10 @@
 <?php declare (strict_types=1);
 
-namespace Modules\Resources;
+namespace Modules\Resources\Controllers;
 
 use Boneradf\Kernel\Request;
 use Boneradf\Kernel\Response;
+use Modules\Resources\Services\ResourceService;
 
 /**
  * Resources HTTP handlers. Bound to the container by ResourcesModule::boot();

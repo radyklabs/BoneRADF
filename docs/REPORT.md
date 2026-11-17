@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Project | BoneRADF — zero-dependency headless PHP microservice framework |
-| Report date | 2026-11-16 |
+| Report date | 2026-11-17 |
 | Status legend | ✅ Done · ⚠️ Open · 🔵 Info · 🟠 Major · 🔴 Critical |
 
 ## Scope
@@ -29,10 +29,11 @@ Project root is `app/` — all BoneRADF code and docs live there.
 | 7 | Cache + Tests + CLI + Deploy | P5 | ✅ Done | Cache (MemoryDriver + FileDriver + Cache facade), micro test runner (assert_true/assert_eq/assert_null/assert_contains, non-zero exit), `bone` CLI (routes/modules/serve), Dockerfile. `tests/p5.php` 21/21 pass. `bone routes` and `bone modules` verified on CLI. |
 | 8 | v1.0.0 candidate | release | ✅ Done | All phases P0–P5 complete; 149 total tests pass across p0–p5. |
 | 9 | Sample login feature | post-v1 | ✅ Done | `AuthModule` (`modules/Auth/`) exposes `/api/auth/login` + `/api/auth/refresh` + global CORS, wired via composition root `public/index.php`; `modules/Auth/seed.php` creates `users` table + seed user `boneradf` in DB `local` (10028, root/root); `tests/p6.php` 16/16. Live HTTP: login 200 (CORS headers on allowed origin), wrong pass 401, empty 422, preflight 204, refresh 200, unknown origin → no CORS headers (fail-closed). |
-| 10 | Module system (§5) | post-v1 | ✅ Done | `src/Contracts/Module.php` interface (`boot(Container, Router, Pipeline)`) + module-aware autoloader (`Modules\*` → `modules/<Name>/src/` and module root). Composition root (`src/Kernel/Boot.php`) discovers modules from `src/Manifest/Modules.php` + per-module `Config/modules.php`, topo-sorted, fail-closed (no global registry — preserves §7 no-global-leakage). `AuthModule` is the first module. |
+| 10 | Module system (§5) | post-v1 | ✅ Done | `src/Contracts/Module.php` interface (`boot(Container, Router, Pipeline)`) + module-aware autoloader (`Modules\<Name>\<Rest>` → `modules/<Name>/<Rest>.php` — nested dirs resolve, full-MVC layout; legacy `src/` retired). Composition root (`src/Kernel/Boot.php`) discovers modules from `src/Manifest/Modules.php` + per-module `Config/modules.php`, topo-sorted, fail-closed (no global registry — preserves §7 no-global-leakage). `AuthModule` is the first module. |
 | 11 | Resources module | post-v1 | ✅ Done | `ResourcesModule` (`modules/Resources/`) CRUD over `resources` table: GET/POST list+create, GET/PUT/DELETE by id, name validation (422 field errors), preflight OPTIONS. Seed 3 rows (Alpha, Beta, Gamma). Live CRUD: list 3 rows, create 201, update, delete 204, preflight 204 + CORS. |
+| 12 | System DB + full-MVC + AR Model | post-v1 | ✅ Done | `src/Database/Database.php` (`fromEnv()` — env read once, memoized shared PDO; removes duplicate per-request module connections + dead `instance('db')`), `src/Database/{Model,Relation}.php` (AR over QueryBuilder: chains + terminals, `hasOne`/`hasMany`/`belongsTo`/`belongsToMany`, eager `with()` bulk-IN N+1-guarded, rows stay arrays). Modules restructured to `Controllers/ + Models/ + Services/` (namespaces `Modules\<Name>\<Layer>`); SQL lives only in `Models/` (`UserModel::findByUsername`, `ResourceModel::listAll`); module `boot()` reads no `BONERADF_DB_*`. `tests/p7.php` 26/26; suite p0–p7 192/192. |
 
-Overall: P0–P5 complete; v1.0.0 candidate. M1–M3 gates met. Post-v1 module system (P6) + Auth + Resources modules done.
+Overall: P0–P5 complete; v1.0.0 candidate. M1–M3 gates met. Post-v1 module system (P6) + Auth + Resources modules done; system-level DB factory + full-MVC layout + in-tree AR Model (P8) done — suite p0–p7 192/192.
 
 ## Findings
 
@@ -40,7 +41,10 @@ Overall: P0–P5 complete; v1.0.0 candidate. M1–M3 gates met. Post-v1 module s
 - 🔵 JWT HS256 secret rotation still needs an operational runbook (rotate, dual-verify window, revoke). AuthGuard implements issue/verify with exp/nbf; rotation is operator procedure, not yet written up.
 - 🔵 Redis cache remains deferred (D10); MemoryDriver + FileDriver shipped. DEPLOY already notes optional ext-redis.
 - 🔵 One-install-per-service: multi-service orchestration stays out of framework scope.
-- 🔵 PDO-only query builder excludes ORM/active-record by design; API_GUIDE documents the contract.
+- 🔵 Builder-only design amended 2026-11-17 (user-approved): in-tree AR
+  `Boneradf\Database\Model` (rows stay arrays, eager relations) sits over the
+  query builder — no raw-SQL API, so D6's core constraint holds; "no external
+  ORM package" remains (PRD §2, decision 20 below).
 - 🔵 `FileDriver` uses PHP `serialize` for its own cache files (not untrusted input); marked with a `ponytail:` comment. Deviation: not JSON, reconciles if cache dir becomes externally writable.
 - 🔵 `assert()` is PHP-reserved, so the micro runner exposes `assert_true()`; documented in CHANGELOG.
 
@@ -67,7 +71,7 @@ and `logs/` at repo root remain out-of-scope.
 | 2 | JSON-only I/O (JSON/REST API, no HTML rendering) | 2026-11-14 | ✅ |
 | 3 | One service per install (no multi-app routing) | 2026-11-14 | ✅ |
 | 4 | Core-minimal + security modules (defense-by-default modules) | 2026-11-14 | ✅ |
-| 5 | PDO-builder-only (query builder over PDO, no ORM) | 2026-11-14 | ✅ |
+| 5 | PDO-builder-only (query builder over PDO, no ORM) | 2026-11-14 | ✅ (amended by #20: in-tree AR over the builder) |
 | 6 | Name: BoneRADF | 2026-11-14 | ✅ |
 | 7 | Memory target < 25 MB RSS | 2026-11-14 | ✅ |
 | 8 | Config: env > file > defaults | 2026-11-14 | ✅ |
@@ -81,13 +85,14 @@ and `logs/` at repo root remain out-of-scope.
 | 17 | Branching model: main/dev/feat/fix/hotfix/patch | 2026-11-14 | ✅ |
 | 18 | Custom commands: >branch, >push, >sync, >track, >audit, >release | 2026-11-14 | ✅ |
 | 19 | RULES.md + CONFIG.md pattern (radykfw-style) | 2026-11-14 | ✅ |
+| 20 | In-tree AR Model over QueryBuilder (ar-arrays + eager relations; no external ORM package, no raw-SQL API) — user-approved scope amendment to #5, together with full-MVC module layout (`Controllers/Models/Services`) and system-level `Database::fromEnv()` | 2026-11-17 | ✅ |
 
 ## Doc sync checklist
 
-1. PLAN reflects current REPORT status — verified 2026-11-16 (P0–P5 ✅; post-v1 module system + Auth module P6.0–P6.5 ✅).
-2. PRD reflects implemented vs planned — verified 2026-11-16 (module system now implemented; PRD §2 notes login sample as post-v1, out of v1 scope).
-3. REPORT matches actual code state — verified 2026-11-16 (165 tests total: p0–p5 149 + p6 16; `src/Module/Module.php`, `modules/Auth/{AuthModule,src/LoginService,seed}.php`, `src/Security/CorsMiddleware.php`, `tests/p6.php` present; `src/Auth/` removed).
-4. CHANGELOG includes all committed changes — verified 2026-11-16 (module system + Auth module under `[Unreleased]`: Added/Changed/Security).
+1. PLAN reflects current REPORT status — verified 2026-11-17 (P0–P5 ✅; post-v1 P6.0–P6.5, P7.0–P7.3, P8.0–P8.4 ✅).
+2. PRD reflects implemented vs planned — verified 2026-11-17 (§2 ORM non-goal amended: no external ORM package; in-tree AR over the builder; module system implemented).
+3. REPORT matches actual code state — verified 2026-11-17 (192 tests total: p0–p5 150 + p6 16 + p7 26; `src/Database/{Database,Model,Relation}.php`, `modules/Auth/{AuthModule,Controllers,Models,Services,seed}`, `modules/Resources/{ResourcesModule,Controllers,Models,Services,seed}`, `tests/p7.php` present; no PHP files under `modules/*/src/` remain).
+4. CHANGELOG includes all committed changes — verified 2026-11-17 (`[Unreleased]` covers system DB factory, AR layer + relations, full-MVC sweep, connection-dedupe fix).
 
 ## Next actions
 

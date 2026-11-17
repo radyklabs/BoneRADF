@@ -19,7 +19,8 @@ Boneradf\Kernel\Boot::init();
 use Boneradf\Kernel\Request;
 use Boneradf\Kernel\Response;
 use Boneradf\Database\ConnectionFactory;
-use Modules\Auth\LoginService;
+use Modules\Auth\Models\UserModel;
+use Modules\Auth\Services\LoginService;
 use Boneradf\Security\AuthGuard;
 use Boneradf\Validator\Validator;
 
@@ -61,7 +62,7 @@ $pdo->prepare('INSERT IGNORE INTO `users` (`username`, `password_hash`) VALUES (
     ->execute(['boneradf', $hash]);
 
 $auth   = new AuthGuard('test-secret', 3600, 604800);
-$login  = new LoginService($pdo, $auth);
+$login  = new LoginService(new UserModel($pdo), $auth);
 
 // ------------------------------------------------------------------
 // LoginService::attempt — happy path

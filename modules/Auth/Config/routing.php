@@ -2,6 +2,8 @@
 
 namespace Modules\Auth;
 
+use Modules\Auth\Controllers\AuthController;
+
 /**
  * Auth module route contributions.
  *

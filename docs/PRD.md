@@ -56,7 +56,9 @@ Explicitly out of scope for v1.0:
 - **No multi-tenant SaaS platform** — one install serves one microservice (D4).
 - **No composer required at runtime** — copy-folder deploy; composer.json is
   optional dev-time convenience only (D2).
-- **No ORM / ActiveRecord** — query builder over PDO only (D6).
+- **No external ORM package / raw-SQL API** — query builder over PDO only
+  (D6); the in-tree AR layer (`Boneradf\Database\Model`, added post-v1 by
+  explicit decision 2026-11-17) runs every statement through that builder.
 - **No plugin marketplace / dynamic code loading** — modules ship in-tree,
   registered explicitly (D2, D5).
 - **No bundled sample feature in v1.0** — v1 ships the framework core (kernel,

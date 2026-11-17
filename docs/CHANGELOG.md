@@ -65,6 +65,35 @@ Versions follow [Semantic Versioning](https://semver.org/).
   `API_GUIDE.md` (`Boneradf\Contracts\Module`), `REPORT.md` (composition-root
   row, module-system row), `CLAUDE.md` (directory layout), `.gitignore`
   (`/public/test.php` scratch), `.vscode/settings.json` (`.config` → php).
+- **Active-record Model layer (in-tree, no raw SQL)**: abstract
+  `src/Database/Model.php` + `src/Database/Relation.php` — chain
+  (select/where/whereIn/orderBy/limit/offset/with) + terminals
+  (get/first/find/insert/update/delete/count) over `QueryBuilder`
+  (prepared statements only, rows stay arrays). Relations: `hasOne`,
+  `hasMany`, `belongsTo`, `belongsToMany` — eager `with()` loads each with
+  one bulk `IN(...)` query (N+1-guarded; unknown relation →
+  RuntimeException). Explicit decision 2026-11-17: D6 stays "no raw query
+  API"; AR sits on top of the builder. ponytail: no dot-path eager, lazy
+  proxies, or morphs (upgrade path in the class docblock).
+- **System-level DB factory** `src/Database/Database.php` —
+  `Database::fromEnv()` reads `BONERADF_DB_DSN/USER/PASS` once (env >
+  framework defaults, keys unchanged) and memoizes one PDO per process.
+- **Full-MVC module layout**: `modules/<Name>/{Controllers,Models,Services}/`
+  with PSR-4 namespaces `Modules\<Name>\<Layer>`; `{Name}Module.php` stays
+  at the module root as bootstrap; `Config/` + `seed.php` unchanged.
+  Routing manifests import the new controller namespaces.
+- **Module models**: `Modules\Auth\Models\UserModel` (`findByUsername` —
+  the only `users` query) and `Modules\Resources\Models\ResourceModel`
+  (`listAll`); services hold business logic with zero SQL.
+- **`tests/p7.php`** — 26/26: factory memoization, CRUD chains + terminal
+  state reset, all four relation types (eager arrays, orphan → null, pivot
+  belongsToMany), prepare-count N+1 guard, fail-loud unknown relation.
+- **Docs sync for the P8 batch**: `ARCHITECTURE.md` §5 (full-MVC layout,
+  autoloader mapping, system-level `Database::fromEnv()`), `PLAN.md`
+  (P8.0–P8.4 rows), `PRD.md` §2 (ORM non-goal amended: no external ORM
+  package; in-tree AR over the builder), `REPORT.md` (row 12, decision 20,
+  checklist re-verified 2026-11-17), `RULES.md` (module layout rule),
+  `CLAUDE.md` (directory layout).
 
 ### Changed
 
@@ -100,6 +129,17 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - `.config` boot guard fixed: `!isset($config['boot']) && …` (never fired) →
   `class_exists($bootkey, false)` after `require_once`; the dead
   `$config['boot'] = true` self-mutation in `Boot.php` is gone.
+- **Module `boot()` = wiring only**: `AuthModule`/`ResourcesModule` no longer
+  read `BONERADF_DB_*` or construct PDO — one `Database::fromEnv()` call
+  each; `LoginService` takes `UserModel`, `ResourceService` takes
+  `ResourceModel`. DB settings exist at system level only.
+- **Class moves + namespace renames (full-MVC)**:
+  `Modules\Auth\AuthController` → `Modules\Auth\Controllers\AuthController`,
+  `Modules\Auth\LoginService` → `Modules\Auth\Services\LoginService`,
+  `Modules\Resources\ResourceController` → `Modules\Resources\Controllers\ResourceController`,
+  `Modules\Resources\ResourceService` → `Modules\Resources\Services\ResourceService`;
+  callers updated (`routing.php` manifests, both `{Name}Module` classes,
+  `tests/p6.php`). The `modules/*/src/` concept is retired.
 
 ### Removed
 
@@ -107,6 +147,12 @@ Versions follow [Semantic Versioning](https://semver.org/).
   truth, class-based). All 11 entry points updated in the same change.
 
 ### Fixed
+
+- **Duplicate per-request PDO connections**: `AuthModule` and
+  `ResourcesModule` each opened their own connection (and `AuthModule` bound
+  an `instance('db')` nothing ever read). Now one shared memoized PDO via
+  `Database::fromEnv()`; the dead `db` binding is removed. Verified: module
+  code contains zero `BONERADF_DB_*` reads; suite p0–p7 192/192.
 
 - **`bone routes` / `bone modules` fatal (`require /.supports`)**: CLI calls
   `Boot::registerAutoloader()` directly without `init()`, so `Boot::$basepath`
