@@ -36,8 +36,6 @@ final class Boot
         }
         self::$initialized = true;
 
-        self::$basepath = dirname(__DIR__, 2);
-
         self::registerAutoloader ();
 
         $router    = new Router ();
@@ -117,19 +115,6 @@ final class Boot
             }
         }
 
-        // Konstanta (nssys / nsmod / system / modules) didefinisikan .config
-        // pada entry web. CLI (tests, bin/bone) tidak me-load .config →
-        // fallback ke nilai default yang sama dengan $directories di index.php.
-        // $nsSys  = defined ('nssys') ? (string) nssys : 'Boneradf\\';
-        // $nsMod  = defined ('nsmod') ? (string) nsmod : 'Modules\\';
-        // $sysDir = defined ('system') ? (string) system : self::root () . '/src';
-
-        // Contoh class: 'Boneradf\Kernel\Boot'
-        //   nssys    = 'Boneradf\\'                       (namespace prefix + trailing \)
-        //   system   = 'D:\Www\boneradf\app\src'          (absol ke folder src/)
-        //   substr   = 'Kernel\Boot'                      (sisa namespace setelah prefix)
-        //   +'.php'  = 'Kernel\Boot.php'                  (path relatif + ekstensi)
-        //   $file    = 'D:\Www\boneradf\app\src\Kernel\Boot.php'
         if (str_starts_with ($class, self::$nssys))
         {
             $system_file = interlace ( system, substr ($class, strlen (self::$nssys)) . '.php');
@@ -139,37 +124,13 @@ final class Boot
             return;
         }
 
-        // Contoh class: 'Modules\Auth\Services\LoginService'
-        //   nsmod    = 'Modules\\'                  (namespace prefix + trailing \)
-        //   $relative= 'Auth\Services\LoginService' (sisa namespace setelah prefix)
-        //   $parts   = ['Auth', 'Services\LoginService'] (explode limit 2 → modul + sisanya)
-        //   $name    = 'Auth'          (nama modul → folder modules/Auth/)
-        //   $inner   = 'Services\LoginService'
-        //   $relPath = 'Services/LoginService' (path relatif dlm modul, \ → /)
-        //   kandidat = modules/Auth/src/LoginService.php   ← cek pertama (PSR-4)
-        //              modules/Auth/LoginService.php      ← cek kedua (bootstrap class)
         if (str_starts_with ($class, self::$nsmod))
         {
-            // $relative = substr ($class, strlen (self::$nsmod));
-            // $parts    = explode ('\\', $relative, 2);
-            // $name     = $parts[0];
-            // $inner    = $parts[1] ?? '';
-            // $modulename  = array_shift ($parts);
-            // $classname = end ($parts);
-            // $relPath  = $inner !== '' ? str_replace ('\\', '/', $inner) : $name;
-
-            // foreach ([
-                // self::modulesDir () . '/' . $name . '/src/' . $relPath . '.php',
-                // self::modulesDir () . '/' . $name . '/' . $relPath . '.php',
-                // interlace (modules, $modulename, 'src', "{$classname}.php"),
-                // interlace (modules, $modulename, "{$classname}.php")
-            // ] as $file) {
             $module_file = interlace (modules, substr ($class, strlen (self::$nsmod)).'.php');
             if (is_readable ($module_file)) {
                 require $module_file;
                 return;
             }
-            // }
         }
     }
 
