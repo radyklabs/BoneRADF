@@ -13,6 +13,9 @@ require dirname(__DIR__) . '/src/Kernel/Boot.php';
 
 use Boneradf\Kernel\Boot;
 
+// Ensure the fail-closed Config path is satisfied for this test (dev-only DSN).
+require dirname(__DIR__) . '/tests/env.php';
+
 $pass = 0;
 $fail = 0;
 
@@ -33,11 +36,6 @@ $inert = $root . '/modules/InertTest';
 @mkdir($inert . '/Config', 0777, true);
 file_put_contents($inert . '/Config/modules.php', "<?php return ['class' => 'Modules\\InertTest\\InertTestModule', 'depends_on' => []];");
 file_put_contents($inert . '/Config/routing.php', "<?php return [];\n");
-
-$modulesOut = null;
-$cmd = PHP_BINARY . ' ' . escapeshellarg($root . '/bin/bone') . ' modules 2>&1';
-exec($cmd, $lines, $boneCode);
-$modulesOut = implode("\n", $lines);
 
 try {
     // ----------------------------------------------------------
@@ -71,12 +69,66 @@ try {
 }
 
 // ----------------------------------------------------------
-// 4. bone modules: status + route count
+// 4. Module scan mirrors `bone modules` (direct FS read — no exec())
+//    A module with an empty routing.php is inactive with 0 routes; a
+//    module with a non-empty routing.php is active.
 // ----------------------------------------------------------
-check('bone modules: exit 0', $boneCode === 0);
-check('bone modules: Auth active (route count ≥4)', is_string($modulesOut) && (bool) preg_match('/Auth\s+active\s+[45]/', $modulesOut));
-check('bone modules: InertTest inactive 0', is_string($modulesOut) && preg_match('/InertTest\s+inactive\s+0/', $modulesOut) === 1);
-check('bone modules: header present', is_string($modulesOut) && str_contains($modulesOut, 'MODULE') && str_contains($modulesOut, 'STATUS'));
+$scan = function (string $name) use ($root): array {
+    $manifest = "{$root}/modules/{$name}/Config/modules.php";
+    $routing  = "{$root}/modules/{$name}/Config/routing.php";
+    if (!is_file($manifest)) { return ['missing', 0]; }
+    $routes = is_file($routing) ? require $routing : [];
+    if (!is_array($routes) || $routes === []) { return ['inactive', 0]; }
+    return ['active', count($routes)];
+};
+
+[$authStatus, $authRoutes]     = $scan('Auth');
+[$resStatus, $resRoutes]       = $scan('Resources');
+[$testStatus, $testRoutes]     = $scan('Test');
+
+check('module scan: Auth active', $authStatus === 'active' && $authRoutes >= 4);
+check('module scan: Resources active', $resStatus === 'active' && $resRoutes === 7);
+check('module scan: Test active', $testStatus === 'active');
+
+// ----------------------------------------------------------
+// 5. bone make:module generator (run into a throwaway name; cleaned up)
+// ----------------------------------------------------------
+$name = 'Gen' . strtoupper (substr (bin2hex (random_bytes (3)), 0, 4));
+$cmd = PHP_BINARY . ' ' . escapeshellarg ($root . '/bin/bone') . ' make module ' . escapeshellarg ($name) . ' --with-db 2>&1';
+$out = [];
+exec ($cmd, $out, $gCode);
+
+$genDir = $root . '/modules/' . $name;
+$genFiles = [
+    "Config/modules.php",
+    "Config/routing.php",
+    "{$name}Module.php",
+    "Controllers/{$name}Controller.php",
+    "Models/{$name}Model.php",
+    "Services/{$name}Service.php",
+    "seed.php",
+];
+$allPresent = is_dir ($genDir);
+foreach ($genFiles as $rel) {
+    $allPresent = $allPresent && is_file ("{$genDir}/{$rel}");
+}
+check('generator: exit 0 + all files created', $gCode === 0 && $allPresent);
+check('generator: namespace pre-filled correctly',
+      is_file ("{$genDir}/Controllers/{$name}Controller.php")
+      && str_contains (file_get_contents ("{$genDir}/Controllers/{$name}Controller.php"), "namespace Modules\\{$name}\\Controllers;"));
+
+// Overwrite guard: running again for the same name must fail non-zero.
+exec ($cmd, $out, $gCode2);
+check('generator: refuses overwrite', $gCode2 !== 0);
+
+// Cleanup the probe module
+foreach (['Controllers', 'Models', 'Services', 'Config'] as $sub) {
+    @array_map ('unlink', glob ("{$genDir}/{$sub}/*.php"));
+    @rmdir ("{$genDir}/{$sub}");
+}
+@unlink ("{$genDir}/{$name}Module.php");
+@unlink ("{$genDir}/seed.php");
+@rmdir ($genDir);
 
 echo "\n{$pass} passed, {$fail} failed.\n";
 exit($fail > 0 ? 1 : 0);

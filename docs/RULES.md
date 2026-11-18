@@ -70,7 +70,13 @@ For logic or major changes:
 - Module layout: `modules/<Name>/` = `Controllers/` (HTTP only), `Models/`
   (table access — the only SQL in a module), `Services/` (business logic,
   zero SQL), `Config/`, `{Name}Module.php` (bootstrap, wiring only). DB
-  settings are system-level (`Database::fromEnv()`), never in modules.
+  settings are system-level (`Database::fromEnv()` via `Config`), never in modules.
+  A module is auto-discovered from `Config/modules.php`; its `routing.php`
+  is both the route contributions AND the activation switch (empty = inert).
+  A module that needs the DB but has no `BONERADF_DB_DSN` fails **boot** with
+  the affected-module list, not a per-request 500. Use
+  `bone make:module <Name> [--with-db]` to scaffold, and set `BONERADF_*`
+  env vars (see `CONFIG.sample.md`) before running seeds/tests.
 - One service per project install (D4).
 - Defense-by-default: secure options are the defaults; opting out is explicit.
 - Boring over clever. Minimal diff. No drive-by refactors.

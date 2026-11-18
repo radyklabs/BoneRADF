@@ -30,6 +30,10 @@ switch ($cmd) {
         cmdModules();
         break;
 
+    case 'make':
+        cmdMake($argv);
+        break;
+
     case 'serve':
         cmdServe($argv);
         break;
@@ -102,6 +106,58 @@ function cmdModules(): void
             $data['class'] ?? '-'
         );
     }
+}
+
+function cmdMake(array $argv): void
+{
+    // bone make:module <Name> [--with-db]
+    $arg = $argv[2] ?? '';
+    if ($arg !== 'module') {
+        fwrite(STDERR, "Usage: bone make:module <Name> [--with-db]\n");
+        exit(1);
+    }
+
+    \Boneradf\Kernel\Boot::registerAutoloader();
+
+    $name  = $argv[3] ?? '';
+    $flags = array_slice($argv, 4);
+
+    if ($name === '' || !preg_match('/^[A-Z][A-Za-z0-9]*$/', $name)) {
+        fwrite(STDERR, "bone make:module: name must be PascalCase (e.g. Invoice), got '{$name}'.\n");
+        exit(1);
+    }
+    if (is_dir(dirname(__DIR__) . '/modules/' . $name)) {
+        fwrite(STDERR, "bone make:module: module '{$name}' already exists.\n");
+        exit(1);
+    }
+
+    $root = dirname(__DIR__);
+
+    $files = [
+        ["modules/{$name}/Config/modules.php", "<?php declare (strict_types=1);\n\nreturn [\n    'class'      => 'Modules\\\\{$name}\\\\{$name}Module',\n    'depends_on' => [],\n];\n"],
+        ["modules/{$name}/Config/routing.php", "<?php declare (strict_types=1);\n\nnamespace Modules\\{$name};\n\nuse Modules\\{$name}\\Controllers\\{$name}Controller;\n\nreturn [\n    'GET  /api/{$name}'          => [{$name}Controller::class, 'index'],\n    'POST /api/{$name}'          => [{$name}Controller::class, 'create'],\n    'GET  /api/{$name}/{id:int}' => [{$name}Controller::class, 'show'],\n];\n"],
+        ["modules/{$name}/{$name}Module.php", "<?php declare (strict_types=1);\n\nnamespace Modules\\{$name};\n\nuse Boneradf\\Container\\Container;\nuse Boneradf\\Middleware\\Pipeline;\nuse Boneradf\\Contracts\\Module;\nuse Boneradf\\Router\\Router;\nuse Boneradf\\Database\\Database;\nuse Modules\\{$name}\\Controllers\\{$name}Controller;\nuse Modules\\{$name}\\Models\\{$name}Model;\nuse Modules\\{$name}\\Services\\{$name}Service;\n\nfinal class {$name}Module implements Module\n{\n    public function name (): string\n    {\n        return '{$name}';\n    }\n\n    public function boot (Container \$container, Router \$router, Pipeline \$pipeline): void\n    {\n        \$service = new {$name}Service(new {$name}Model(Database::fromEnv()));\n        \$container->instance('{$name}.service', \$service);\n        \$container->instance({$name}Controller::class, new {$name}Controller(\$service));\n    }\n}\n"],
+        ["modules/{$name}/Controllers/{$name}Controller.php", "<?php declare (strict_types=1);\n\nnamespace Modules\\{$name}\\Controllers;\n\nuse Boneradf\\Kernel\\Request;\nuse Boneradf\\Kernel\\Response;\nuse Boneradf\\Validator\\Validator;\nuse Modules\\{$name}\\Services\\{$name}Service;\n\nfinal class {$name}Controller\n{\n    private {$name}Service \$service;\n\n    public function __construct (?{$name}Service \$service = null)\n    {\n        \$this->service = \$service ?? new {$name}Service();\n    }\n\n    public function index (Request \$req, array \$params): Response\n    {\n        return Response::json (\$this->service->listAll());\n    }\n\n    public function create (Request \$req, array \$params): Response\n    {\n        return Response::json ([], 201);\n    }\n\n    public function show (Request \$req, array \$params): Response\n    {\n        return Response::json (['id' => \$params['id'] ?? null]);\n    }\n}\n"],
+        ["modules/{$name}/Models/{$name}Model.php", "<?php declare (strict_types=1);\n\nnamespace Modules\\{$name}\\Models;\n\nuse Boneradf\\Database\\Model;\n\nfinal class {$name}Model extends Model\n{\n    protected string \$table = '{$name}s';\n\n    public function listAll (): array\n    {\n        return \$this->select('id')\n            ->orderBy('id', 'ASC')\n            ->get();\n    }\n}\n"],
+        ["modules/{$name}/Services/{$name}Service.php", "<?php declare (strict_types=1);\n\nnamespace Modules\\{$name}\\Services;\n\nuse Boneradf\\Database\\Database;\nuse Boneradf\\Kernel\\Response;\nuse Modules\\{$name}\\Models\\{$name}Model;\n\nfinal class {$name}Service\n{\n    private {$name}Model \$model;\n\n    public function __construct ({$name}Model \$model)\n    {\n        \$this->model = \$model;\n    }\n\n    public function listAll (): array\n    {\n        return \$this->model->listAll();\n    }\n}\n"],
+    ];
+
+    if (in_array('--with-db', $flags, true)) {
+        $files[] = ["modules/{$name}/seed.php", "<?php\n\ndeclare(strict_types=1);\n\n/**\n * modules/{$name}/seed.php — idempotent sample bootstrap for the {$name} module.\n *\n * Run:  php -d extension=pdo_mysql modules/{$name}/seed.php\n */\n\nrequire dirname(__DIR__, 2) . '/src/Kernel/Boot.php';\n\n\$pdo = Boneradf\\Database\\Database::fromEnv();\n\necho \"Seed: {$name} ready.\\n\";\n"];
+    }
+
+    foreach ($files as [$rel, $body]) {
+        $path = $root . '/' . $rel;
+        $dir = dirname($path);
+        if (!is_dir($dir)) { mkdir($dir, 0755, true); }
+        file_put_contents($path, $body);
+    }
+
+    printf("Created module %s:\n\n", $name);
+    foreach ($files as [$rel]) {
+        printf("  %s\n", $rel);
+    }
+    echo "\n";
 }
 
 function cmdServe(array $argv): void

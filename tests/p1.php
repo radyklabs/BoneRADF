@@ -78,6 +78,14 @@ $router3->group('/health', function (Router $r) {
 $match = $router3->match(new Request('GET', '/health/ping'));
 check('router group opt-out (no /api) match', $match !== null && $match['route']->pattern() === '/health/ping');
 
+// --- Router: literal metacharacters in patterns are escaped ---
+$router5 = new Router();
+$router5->get('/api/v1.a.b', fn () => ['ok' => true]);
+$m1 = $router5->match(new Request('GET', '/api/v1-a-b'));
+check('router: literal . does not match another char', $m1 === null);
+$m2 = $router5->match(new Request('GET', '/api/v1.a.b'));
+check('router: literal . matches itself', $m2 !== null);
+
 // --- Router: enumeration ---
 check('router routes() count', count($router2->routes()) === 2);
 

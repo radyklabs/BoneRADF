@@ -134,8 +134,10 @@ final class QueryBuilder
      */
     public function first (): ?array
     {
+        $saved = $this->limit;
         $this->limit = 1;
         $rows = $this->get ();
+        $this->limit = $saved; // restore so chain reuse is not broken by a terminal.
         return $rows[0] ?? null;
     }
 
@@ -226,8 +228,10 @@ final class QueryBuilder
      */
     public function count (): int
     {
+        $saved = $this->select;
         $this->select = ['COUNT(*)'];
         $row = $this->first ();
+        $this->select = $saved; // restore so chain reuse is not broken by a terminal.
         return $row !== null ? (int) reset ($row) : 0;
     }
 

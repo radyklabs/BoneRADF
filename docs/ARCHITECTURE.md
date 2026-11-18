@@ -61,12 +61,12 @@ Trade-off accepted: no built-in service discovery or inter-service RPC. Services
 Precise order. Steps are numbered; each must complete before the next.
 
 1. **Autoloader** — `src/Kernel/Boot.php` registers the custom PSR-4 autoloader for root namespace `Boneradf\` (and module namespaces, step 5). No Composer at runtime. `Boot::init()` is static and boot-scope only; it returns an instance `Kernel` so no request state is held across requests.
-2. **Config load** — read typed, env-aware config (§7): `.env` or JSON, environment overrides applied. Fail fast on missing required keys.
+2. **Config load** — `Config::loadSystem()` builds the process-wide typed Config from `BONERADF_*` env (env > file > defaults). Required keys lack hardcoded fallbacks; a missing required key throws at boot. `Database::fromEnv()`, `AuthModule`, and `CsrfGuard` read through this Config — no inline `getenv()` in core. Missing DB config with an active module → clear boot error listing the modules.
 3. **Container** — instantiate the light DI container (§4), register core bindings (Config, Logger, Router, PDO factory, etc.).
 4. **Logging** — create the structured logger (§10) and bind it; from here boot failures are logged, not just fatal-echoed.
 5. **Middleware registration** — register core middleware in fixed defense-by-default order (SecurityHeaders → CSRF → Auth → RBAC → RateLimit), then module-registered middleware (§5).
-6. **Router build** — collect routes from core + modules (§6), compile route groups/prefixes, build the match table. Done once per boot, not per request match.
-7. **Dispatch** — match request method + path; run the middleware pipeline; invoke the controller/handler with route params + container-resolved dependencies.
+6. **Router build** — collect routes from core + modules (§6), compile route groups/prefixes, build the match table. Done once per boot, not per request match. Route-specific middleware lists are resolved at boot (per-route); the shared pipeline is never mutated during dispatch.
+7. **Dispatch** — match request method + path; run the **cloned** per-request pipeline (the shared pipeline stays read-only across requests); invoke the controller/handler with route params + container-resolved dependencies.
 8. **Response render** — serialize the handler result to the uniform JSON envelope; unwind middleware; emit HTTP response.
 
 Failure at steps 1–4 is a boot failure: JSON error envelope (if logging is up, log first) + non-2xx exit. Failure at steps 5–8 is a request failure: same envelope, request continues to serve other requests.
@@ -162,7 +162,9 @@ discovered, resolved, and booted. Two layers:
   booted only when its `Config/routing.php` declares ≥1 route; an empty file
   keeps it inert (fail-closed). Boot order is topological over each
   manifest's `depends_on`; cycles, unknown/inactive dependencies, missing
-  classes, and duplicate route aliases all fail boot.
+  classes, and duplicate route aliases all fail boot. If any active module's
+  database env (`BONERADF_DB_DSN`) is unset, `Boot::ensureSystemReady()`
+  fails boot with the list of affected modules (never a per-request 500).
 
 This preserves §7's "no `global()` leakage" rule. `public/index.php` stays
 the front controller and only calls
@@ -229,7 +231,7 @@ Connections come from the container (PDO factory binding). Connection options, c
 
 - **Typed** — keys have declared types (string/int/bool/…); loading coerces and validates; a type mismatch fails boot (step 2) with a clear message. No stringly-typed `get('key')` returning mixed surprises.
 - **Env-aware** — environment selection (dev/staging/prod) drives defaults and strictness (e.g., debug details in envelope only when env allows).
-- **Source** — per-service `.env` or JSON file. Precedence: environment variables > env file > defaults (exact precedence table: planned).
+- **Source** — `Config::loadSystem()` builds the process-wide typed Config from `BONERADF_*` environment variables (env > file > defaults; a config-file path is pluggable via the `$file` constructor arg). Required keys fail boot when unset/empty. `Database::fromEnv()`, `AuthModule`, and `CsrfGuard` read through it — no inline `getenv()` in core.
 - **No `global()` leakage** — config is an injected object (container-bound), never a global function or superglobal. Code that needs config receives `Config`. This keeps installs isolated and tests free of global state.
 
 ### Error envelope
@@ -306,4 +308,4 @@ The container is the single composition root: extending the framework = binding 
 
 ---
 
-Last synced: 2026-11-17 — §5 auto-discovery + activation-via-routing (no central module registry; `routing.php` is the module's activation switch); opt-in HTML view responses (`Response::view`, `src/Views/`) for public landing; suite p0–p8 207/207; project root at `app/`.
+Last synced: 2026-11-17 — §3 Config wired into Boot + DB fail-closed + DB-availability boot check + per-request pipeline clone; §5 activation + DB-unavailable boot error; §9 Config from BONERADF_* env (no inline getenv); suite p0–p8 212/212; project root at `app/`.

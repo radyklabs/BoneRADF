@@ -14,6 +14,9 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/src/Kernel/Boot.php';
 
+// Ensure the fail-closed Config path is satisfied for this test.
+require dirname(__DIR__) . '/tests/env.php';
+
 Boneradf\Kernel\Boot::withoutModules();
 
 use Boneradf\Database\Database;

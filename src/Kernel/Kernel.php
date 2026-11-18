@@ -110,8 +110,11 @@ final class Kernel
         $route  = $match['route'];
         $params = $match['params'];
 
-        // Resolve route-specific middleware
-        $pipeline = $this->pipeline;
+        // Clone the shared pipeline so route-specific middleware registration
+        // (the loop below) does not leak across requests. ARCHITECTURE §3
+        // step 6: the route table is read-only during dispatch; the shared
+        // pipeline must stay untouched after boot.
+        $pipeline = clone $this->pipeline;
         foreach ($route->middleware () as $name)
         {
             $mw = $this->router->getMiddleware ($name);

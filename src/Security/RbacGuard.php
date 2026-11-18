@@ -34,9 +34,13 @@ final class RbacGuard implements Middleware
 
     public function handle (Request $req, callable $next): Response
     {
+        // Public routes (no permission declared) pass through. This is the
+        // D5 "ON by default for protected routes" contract: a route that
+        // does NOT declare an `rbac:*` middleware is public; a route that
+        // DOES declare one is protected and deny-by-default (403 / 401).
         if ($this->requiredPermission === null)
         {
-            return Response::error ('FORBIDDEN', 'No permission declared for this route.', 403);
+            return $next ($req);
         }
 
         $user = $req->user ();
@@ -56,6 +60,11 @@ final class RbacGuard implements Middleware
         return $next ($req);
     }
 
+    /**
+     * Build an RbacGuard from a route middleware name (`rbac:users.create`).
+     * The module registers it via `$router->registerMiddleware('rbac:…', …)`,
+     * then a route declares `middleware: ['rbac:users.create']`.
+     */
     public static function fromMiddlewareName (string $name, array $roleMap): self
     {
         // name format: rbac:users.create

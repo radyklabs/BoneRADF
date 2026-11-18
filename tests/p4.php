@@ -125,7 +125,7 @@ $roleMap = [
 // No permission → 403
 $rbac = new RbacGuard($roleMap, null);
 $resp = $rbac->handle(new Request('GET', '/'), fn () => Response::json([]));
-check('rbac: no permission → 403', $resp->status() === 403);
+check('rbac: public route (no permission) → 200 (D5: ON-by-default for protected only)', $resp->status() === 200);
 
 // Unauthenticated → 401
 $rbac2 = new RbacGuard($roleMap, 'users.create');

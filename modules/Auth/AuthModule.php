@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Auth;
 
+use Boneradf\Config\Config;
 use Boneradf\Container\Container;
 use Boneradf\Database\Database;
 use Boneradf\Middleware\Pipeline;
@@ -34,7 +35,8 @@ final class AuthModule implements Module
 
     public function boot(Container $container, Router $router, Pipeline $pipeline): void
     {
-        $secret = getenv('BONERADF_APP_KEY') ?: 'dev-only-insecure-jwt-secret';
+        $config = Config::loadSystem ();
+        $secret = $config->get ('app.key');
 
         $auth = new AuthGuard($secret, 3600, 604800);
         $container->instance('auth.guard', $auth);
@@ -43,14 +45,14 @@ final class AuthModule implements Module
         $container->instance('auth.login', $login);
         $container->instance(AuthController::class, new AuthController($login));
 
-        $cors = new CorsMiddleware($this->corsOrigins());
+        $cors = new CorsMiddleware($this->corsOrigins ($config));
         $pipeline->add($cors);
     }
 
     /**
      * @return string[] allowed CORS origins.
      */
-    private function corsOrigins(): array
+    private function corsOrigins (Config $config): array
     {
         $defaults = [
             'http://localhost:4173',
@@ -62,8 +64,9 @@ final class AuthModule implements Module
             'http://localhost',
             'http://127.0.0.1',
         ];
-        $env = getenv('BONERADF_CORS_ORIGINS');
-        if ($env !== false && $env !== '') {
+        $env = $config->getOr ('cors.origins', '');
+        if ($env !== false && $env !== '')
+        {
             return array_values(array_filter(array_map('trim', explode(',', $env))));
         }
         return $defaults;

@@ -173,6 +173,15 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 | P9.0 | `src/Manifest/Modules.php` deleted; `Boot` scans `modules/*/Config/modules.php` — adding a module needs zero core edits | post-v1 | ✅ Done |
 | P9.1 | Activation switch: `Config/routing.php` ≥1 route = active/booted; empty = inert (fail-closed). `bin/bone modules` shows active/inactive + route count | post-v1 | ✅ Done |
 | P9.2 | `tests/p8.php` — 9/9 (discovery, active boot, inert no-boot, route-count activation, `bone modules` output); suite p0–p8 201/201 | post-v1 | ✅ Done |
+| — | **P9.5: review-driven hardening** (`docs/REVIEW-2026-11-17-v2.md`), user decisions locked 2026-11-17 | **post-v1** | 🔵 Info |
+| P9.5.1 | `Model::find()` respects the queued `where()` chain | post-v1 | ✅ Done |
+| P9.5.2 | `Route::compileRegex()` escapes literal metacharacters (`.` no longer matches any char) | post-v1 | ✅ Done |
+| P9.5.3 | Pipeline cloned per request in `Kernel::dispatch` (shared pipeline not mutated) | post-v1 | ✅ Done |
+| P9.5.4 | `Config` wired into `Boot::init()`; `Database::fromEnv()` fail-closed (no `root/root` fallbacks); DB-availability-aware boot check; `AuthModule`/`CsrfGuard` read Config | post-v1 | ✅ Done |
+| P9.5.5 | `bone make:module <Name> [--with-db]` generator (pre-1.0; supersedes v1.1 deferral of D8) | post-v1 | ✅ Done |
+| P9.5.6 | `RbacGuard` contract fixed for wiring (public routes pass; declared permission checked deny-by-default) | post-v1 | ✅ Done |
+| P9.5.7 | Minor cleanup m2–m9 (QB terminal state, recursive logger redact, p8 `exec()` removed, seed env centralized, `in` coercion, handler method_exists, index.php JSON boot-failure) | post-v1 | ✅ Done |
+| P9.5.8 | Docs + suite sync; suite p0–p8 212/212 | post-v1 | ✅ Done |
 | — | **Post-v1: HTML view responses (public landing)** (user-approved 2026-11-17) | **post-v1** | 🔵 Info |
 | P9.3 | `Response::html()` + `Response::view()` — opt-in text/html responses; views under `src/Views/` (traversal-guarded name); `src/Views/landing.php` sample; D2 amended | post-v1 | ✅ Done |
 | P9.4 | `tests/p0.php` +6 (html pass-through, view render, traversal reject, missing view); suite p0–p8 207/207 | post-v1 | ✅ Done |
@@ -195,4 +204,4 @@ All tasks start ⚠️ Open. Phase headers are 🔵 Info.
 - New file paths in `src/` are planned until created; do not cite them as existing.
 - Scope changes mid-phase: accept / defer / reject explicitly — never silently absorb.
 
-Last synced: 2026-11-17 — P0–P5 complete; M1–M3 gates met; v1.0.0 candidate. Post-v1: module system (§5) + Auth (P6.0–P6.5) + Resources (P7.0–P7.3) done. New: system-level `Database::fromEnv()` + in-tree AR Model + full-MVC layout (P8.0–P8.4) + module auto-discovery & routing-based activation (P9.0–P9.2) + HTML view responses for public landing (P9.3–P9.4) ✅ — suite p0–p8 207/207.
+Last synced: 2026-11-17 — P0–P5 complete; M1–M3 gates met; v1.0.0 candidate. Post-v1: module system (§5) + Auth (P6.0–P6.5) + Resources (P7.0–P7.3) done. New: system-level `Database::fromEnv()` + in-tree AR Model + full-MVC layout (P8.0–P8.4) + module auto-discovery & routing-based activation (P9.0–P9.2) + HTML view responses for public landing (P9.3–P9.4) + P9.5 hardening (Config wired + DB fail-closed, `find()` queue-respecting, route metachar escape, pipeline-per-request, RBAC wiring, `make:module`, minor cleanup) ✅ — suite p0–p8 212/212.

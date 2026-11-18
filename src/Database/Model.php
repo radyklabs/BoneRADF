@@ -139,15 +139,18 @@ abstract class Model
     }
 
     /**
-     * Fresh lookup by primary key — discards any pending chain (queued
-     * with() still applies).
+     * Lookup by primary key, composing with any queued `where()` / `select()`
+     * / `orderBy()` / `limit()` / `offset()` / `with()` on the chain.
+     *
+     * `find($id)` is equivalent to `where($primaryKey, '=', $id)->first()`
+     * — the queued chain is NOT discarded. To look up a row by primary key
+     * alone (ignoring any queued where), call `first()` after `where(pk, =, id)`.
      *
      * @return array<string, mixed>|null
      */
     public function find (int|string $id): ?array
     {
-        $row = (new QueryBuilder ($this->pdo))
-            ->table ($this->table)
+        $row = $this->query ()
             ->where ($this->primaryKey, '=', $id)
             ->first ();
         if ($row !== null)

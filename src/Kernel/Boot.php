@@ -37,7 +37,16 @@ final class Boot
         
         self::$initialized = true;
 
+        // DB-availability + Config readiness (reads `.env` directly via
+        // Config::parseDotEnv + realEnv; no separate .env loader needed).
         self::registerAutoloader ();
+
+        // Fail-closed boot check (skipped when module boot is off — the
+        // no-DB test harness path).
+        if (self::$bootModules)
+        {
+            self::ensureSystemReady ();
+        }
 
         $router    = new Router ();
         $pipeline  = new Pipeline ();
@@ -164,9 +173,21 @@ final class Boot
      */
     private static function handler (array $handler, Container $container): callable
     {
-        return static function (Request $req, array $params) use ($handler, $container)
+        [$class, $method] = $handler;
+
+        // Fail fast on a route that names a missing class/method — better a
+        // clear RuntimeException at boot than a generic 500 at request time.
+        if (!class_exists ($class))
         {
-            [$class, $method] = $handler;
+            throw new RuntimeException ("Boot: route handler class '{$class}' not found.");
+        }
+        if (!method_exists ($class, $method))
+        {
+            throw new RuntimeException ("Boot: route handler method '{$method}' not found on '{$class}'.");
+        }
+
+        return static function (Request $req, array $params) use ($class, $method, $container)
+        {
             $controller = $container->has ($class)
                 ? $container->get ($class)
                 : new $class ();
@@ -199,6 +220,53 @@ final class Boot
             return [strtoupper ($parts[0]), $parts[1]];
         }
         throw new RuntimeException ("Boot: invalid route alias '{$alias}'.");
+    }
+
+    /**
+     * Fail-closed boot check: when any module is active but its database is
+     * not configured, throw a clear, actionable error *at boot time* —
+     * not a per-request 500.
+     *
+     * "Active" = the module's `Config/routing.php` declares at least one
+     * route. We don't connect to the DB here (cheap check, no PDO); the
+     * first `Database::fromEnv()` call inside a module's `boot()` will do
+     * the real connection. This guard only catches the "env is unset"
+     * case, which is the common fresh-install failure mode.
+     */
+    private static function ensureSystemReady (): void
+    {
+        $active = [];
+        foreach (self::discoveredModules () as $name)
+        {
+            if (self::moduleRoutes ($name) !== [])
+            {
+                $active[] = $name;
+            }
+        }
+        if ($active === [])
+        {
+            return; // no active modules → no DB needed → nothing to check.
+        }
+
+        // Fail-closed: the selected named connection must be declared with a
+        // non-empty database name. (We don't connect here — cheap check only.)
+        try {
+            $config = \Boneradf\Config\Config::loadSystem ();
+            $name   = $config->connectionName ();
+            $db     = $config->getOr ("database.{$name}.name", '');
+        } catch (\RuntimeException $e) {
+            throw new RuntimeException (
+                'Boot: active modules [' . implode (', ', $active) .
+                '] require a database, but ' . $e->getMessage ()
+            );
+        }
+        if ($db === '')
+        {
+            throw new RuntimeException (
+                'Boot: active modules [' . implode (', ', $active) .
+                "] require a database, but 'database.{$name}.name' is empty."
+            );
+        }
     }
 
     /**

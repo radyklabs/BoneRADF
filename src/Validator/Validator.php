@@ -214,7 +214,8 @@ final class Validator
 
             case 'in':
                 $allowed = explode (',', $param);
-                if (!in_array ((string) $value, $allowed, true))
+                $asStrings = array_map (fn ($a) => (string) $a, $allowed);
+                if (!in_array ((string) $value, $asStrings, true))
                 {
                     return "The {$field} field must be one of: {$param}.";
                 }

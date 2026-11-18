@@ -2,26 +2,34 @@
 
 namespace Boneradf\Database;
 
+use Boneradf\Config\Config;
 use PDO;
 
 /**
- * System-level PDO source — the single place that reads BONERADF_DB_* env.
+ * System-level PDO source — the single place that reads DB settings.
  *
- * `fromEnv()` memoizes the connection per process: every module calling it
+ * `fromEnv()` memoizes one connection per process: every module calling it
  * shares one PDO (no per-module duplicate connections). Module boot wires
- * `new XModel(Database::fromEnv())`; nothing else reads DB env settings.
+ * `new XModel(Database::fromEnv())`; nothing else reads DB settings.
  *
- * ponytail: one DSN per process. Upgrade path when a second database lands
- * (read replica / per-module SQLite): named connections `Database::get('name')`.
+ * Connection selection is a runtime choice (`Config::connectionName()`):
+ *   database.<name>.{driver,host,port,name,charset,user,pass} + database.env
+ * Multiple named connections (default, test, …) can coexist; adding one is
+ * a `.env` block + no code change.
  */
 final class Database
 {
     private static ?PDO $pdo = null;
 
     /**
-     * Shared PDO built from env with framework-default fallbacks.
+     * Shared PDO for the runtime-selected connection.
      *
-     * @throws \RuntimeException on connection failure
+     * Fail-closed: throws when the selected connection's DSN cannot be
+     * built (missing host/name, unsupported driver). No hardcoded DSN
+     * fallbacks (D9).
+     *
+     * @throws RuntimeException when the connection config is missing/invalid
+     * @throws \PDOException     on connection failure
      */
     public static function fromEnv (): PDO
     {
@@ -30,9 +38,10 @@ final class Database
             return self::$pdo;
         }
 
-        $dsn  = getenv ('BONERADF_DB_DSN') ?: 'mysql:host=127.0.0.1;port=10028;dbname=local;charset=utf8mb4';
-        $user = getenv ('BONERADF_DB_USER') ?: 'root';
-        $pass = getenv ('BONERADF_DB_PASS') ?: 'root';
+        $config = Config::loadSystem ();
+        $dsn    = $config->dsn ();
+        $user   = $config->dbUser ();
+        $pass   = $config->dbPass ();
 
         return self::$pdo = (new ConnectionFactory ($dsn, $user, $pass, [
             PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
