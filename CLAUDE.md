@@ -84,7 +84,6 @@ modules/                  — development layer (PSR-4, namespace Modules\<Name>
     seed.php              — idempotent `users` table + sample user bootstrap
 tests/                    — micro test suite p0–p8
 ```
-```
 
 ## Docs Sync Rule
 `app/docs/PLAN.md`, `app/docs/PRD.md`, `app/docs/REPORT.md`,

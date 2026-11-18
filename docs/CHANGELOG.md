@@ -210,6 +210,10 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **`CLAUDE.md` markdown formatting**: removed a stray duplicate closing
+  code fence after the `src/ + modules/ layout` block that caused the rest
+  of the file to render as a code block.
+
 - **Duplicate per-request PDO connections**: `AuthModule` and
   `ResourcesModule` each opened their own connection (and `AuthModule` bound
   an `instance('db')` nothing ever read). Now one shared memoized PDO via
